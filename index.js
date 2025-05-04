@@ -3,7 +3,10 @@ const productosRoutes = require('./routes/productos.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const pedidosRoutes = require('./routes/pedidos.routes');
 
+
+
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const db = require('./db'); 
 
