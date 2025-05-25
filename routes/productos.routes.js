@@ -82,7 +82,7 @@ router.put('/:id', async (req, res) => {
     try {
       const result = await db.query(
         'UPDATE productos SET nombre = $1, modelo = $2, marca = $3, codigo = $4, precio = $5, stock = $6, categoria = $7, descripcion = $8 WHERE id = $9 RETURNING *',
-        [nombre, modelo, marca, codigo, precio, stock, categoria, descripcion]
+        [nombre, modelo, marca, codigo, precio, stock, categoria, descripcion, id]
       );
   
       if (result.rows.length === 0) {

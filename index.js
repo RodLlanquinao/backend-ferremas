@@ -3,6 +3,7 @@ const productosRoutes = require('./routes/productos.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const pedidosRoutes = require('./routes/pedidos.routes');
 const contactoRoutes = require('./routes/contacto.routes');
+const webpayRoutes = require('./routes/webpay.routes');
 
 
 
@@ -15,7 +16,7 @@ app.use('/productos', productosRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/pedidos', pedidosRoutes);
 app.use('/contacto', contactoRoutes);
-
+app.use('/webpay', webpayRoutes);
 
 app.get('/', (req, res) => {
   res.send('¡Hola FERREMAS Backend!');
