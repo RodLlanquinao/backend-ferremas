@@ -102,7 +102,7 @@ backendferremas/
 
 3. **Ejecutar en desarrollo**
    ```bash
-   npm run dev
+   node index.js
    ```
 
 ### Despliegue en Railway
