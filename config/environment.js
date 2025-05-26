@@ -6,14 +6,20 @@
  * VARIABLES DE ENTORNO REQUERIDAS EN RAILWAY:
  * - DATABASE_URL: URL de conexión a PostgreSQL (inyectada automáticamente)
  * - PORT: Puerto para el servidor (inyectado automáticamente)
- * - NODE_ENV: Entorno de ejecución (development, production, test)
+ * - NODE_ENV: Entorno de ejecución (integration, production, development, test)
  * - CORS_ORIGIN: Orígenes permitidos para CORS (opcional, por defecto "*")
+ * 
+ * ENTORNOS DE EJECUCIÓN DISPONIBLES:
+ * - integration: Entorno para pruebas con integración de Transbank (WebpayPlus)
+ * - production: Entorno de producción con Transbank en modo producción
+ * - development: Entorno de desarrollo local (sin conexión real a Transbank)
+ * - test: Entorno para pruebas automatizadas
  */
 
 module.exports = {
   // Configuración del servidor
   PORT: process.env.PORT || 3000,
-  NODE_ENV: process.env.NODE_ENV || "production",
+  NODE_ENV: process.env.NODE_ENV || "integration", // Valor por defecto cambiado a integration para pruebas con Transbank
 
   // Configuración de la base de datos - Railway provee automáticamente DATABASE_URL
   // En Railway, esta variable es inyectada automáticamente al deploy
@@ -39,7 +45,7 @@ module.exports = {
   APP_URL: process.env.RAILWAY_STATIC_URL || `http://localhost:${process.env.PORT || 3000}`,
   
   // Railway específico - entorno de ejecución
-  RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT || "development",
+  RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT || "integration", // Sincronizado con NODE_ENV por defecto
   
   // Configuración de tiempo de espera de la base de datos
   DB_CONNECTION_TIMEOUT: parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000"),
