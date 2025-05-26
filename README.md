@@ -357,12 +357,6 @@ La colección utiliza las siguientes variables que puedes configurar en tu entor
      # Funciona en Windows, Mac y Linux
      node webpay-test.js
      ```
-   - **Opción 3 - Script Bash** (solo Mac/Linux):
-     ```bash
-     # Solo para Mac/Linux
-     chmod +x webpay-test.sh
-     ./webpay-test.sh
-     ```
 
 3. **Completar el pago en Webpay**
    - Se abrirá una página web con el formulario de pago
