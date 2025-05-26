@@ -42,7 +42,7 @@ async function actualizarPedido(id, datos) {
 }
 
 // Función para generar respuestas HTML consistentes
-function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, redireccion = null, segundosRedireccion = 3 }) {
+function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, redireccion = null, segundosRedireccion = 3, redireccionHtml = null }) {
   const colorTitulo = esExito ? '#28a745' : '#dc3545';
   const icono = esExito ? '✅' : '❌';
   
@@ -55,9 +55,13 @@ function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, 
     `;
   }
   
-  let redireccionHtml = '';
-  if (redireccion) {
-    redireccionHtml = `
+  let redirHtml = '';
+  if (redireccionHtml) {
+    // Usar el HTML personalizado para redirección si se proporciona
+    redirHtml = redireccionHtml;
+  } else if (redireccion) {
+    // Usar la redirección estándar si se proporciona una URL
+    redirHtml = `
       <p class="loading">Redirigiendo en ${segundosRedireccion} segundos...</p>
       <script>
         setTimeout(function() {
@@ -177,7 +181,7 @@ function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, 
         </div>
         <p class="message">${mensaje}</p>
         ${detallesHtml}
-        ${redireccionHtml}
+        ${redirHtml}
     </div>
 </body>
 </html>`;
@@ -206,7 +210,7 @@ router.post('/crear-transaccion', async (req, res) => {
 
       // Verificar si ya tiene un token activo
       if (pedido.transbank_token && pedido.transbank_status === 'INICIADA') {
-        console.log('[Webpay] Pedido ya tiene una transacción iniciada, reutilizando token existente');
+        console.log('[Webpay] Pedido ya tiene una transacción iniciada, verificando estado del token existente');
         
         // Buscar si la transacción sigue activa en Transbank
         try {
@@ -214,25 +218,78 @@ router.post('/crear-transaccion', async (req, res) => {
           const statusResponse = await transaction.status(pedido.transbank_token);
           console.log('[Webpay] Estado de transacción existente:', statusResponse);
           
-          // Si la transacción está vigente, redirigir al usuario para continuar
-          const html = generarHtmlRespuesta({
-            titulo: 'Retomando Pago',
-            mensaje: 'Hemos detectado un pago en proceso para este pedido. Serás redirigido para completarlo.',
-            detalles: [
-              { etiqueta: 'Orden', valor: pedido.buy_order },
-              { etiqueta: 'Monto', valor: new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(pedido.monto) },
-              { etiqueta: 'Estado', valor: 'Pago en proceso' }
-            ],
-            esExito: true,
-            redireccion: statusResponse.url,
-            segundosRedireccion: 2
-          });
+          // Verificar si el token sigue siendo válido basado en su estado
+          const validTokenStatuses = ['INITIALIZED', 'CREATED'];
+          const isTokenValid = validTokenStatuses.includes(statusResponse.status);
           
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          return res.send(html);
+          if (isTokenValid && statusResponse.url) {
+            console.log('[Webpay] Token existente válido, redirigiendo al usuario');
+            
+            // Actualizamos el estado del pedido para indicar que se está retomando el pago
+            await actualizarPedido(pedido_id, {
+              token: pedido.transbank_token,
+              status: 'RETOMADA',
+              nuevoEstado: 'en_proceso'
+            });
+            
+            // Si la transacción está vigente, redirigir inmediatamente al usuario
+            const redirectHtml = generarHtmlRespuesta({
+              titulo: 'Retomando Pago',
+              mensaje: 'Hemos detectado un pago en proceso para este pedido. Serás redirigido automáticamente.',
+              detalles: [
+                { etiqueta: 'Orden', valor: pedido.buy_order || 'ORD-' + pedido_id },
+                { etiqueta: 'Estado', valor: 'Pago en proceso' },
+                { etiqueta: 'Acción', valor: 'Redirección automática a Webpay' }
+              ],
+              esExito: true,
+              redireccionHtml: `
+                <form id="redirectForm" action="${statusResponse.url}" method="POST" style="display:none;">
+                  <input type="hidden" name="token_ws" value="${pedido.transbank_token}" />
+                </form>
+                <script>
+                  // Registrar evento en consola
+                  console.log('Redirigiendo a Webpay con token existente');
+                  
+                  // Enviar formulario automáticamente después de 2 segundos
+                  setTimeout(function() {
+                    document.getElementById('redirectForm').submit();
+                    console.log('Formulario enviado');
+                  }, 2000);
+                </script>
+              `
+            });
+            
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            return res.send(redirectHtml);
+          } else {
+            // El token existe pero no está en un estado válido para continuar
+            console.log('[Webpay] Token existente no válido o expirado:', statusResponse.status);
+            
+            // Actualizar el pedido para indicar que el token expiró
+            await actualizarPedido(pedido_id, {
+              status: 'EXPIRADA',
+              nuevoEstado: 'pendiente'
+            });
+            
+            console.log('[Webpay] Estado de pedido actualizado a EXPIRADA, se creará un nuevo token');
+          }
         } catch (tokenError) {
-          console.log('[Webpay] Error al verificar token existente, creando nueva transacción:', tokenError);
-          // Si hay error, asumimos que el token expiró y creamos uno nuevo
+          console.error('[Webpay] Error al verificar token existente:', tokenError);
+          
+          // Registramos el error específico para mejor diagnóstico
+          if (tokenError.message.includes('not found') || tokenError.message.includes('no encontrada')) {
+            console.log('[Webpay] El token ya no existe en Transbank, se creará uno nuevo');
+          } else if (tokenError.message.includes('timeout') || tokenError.message.includes('tiempo de espera')) {
+            console.log('[Webpay] Tiempo de espera agotado al verificar token, se creará uno nuevo');
+          } else {
+            console.log('[Webpay] Error desconocido al verificar token, se creará uno nuevo:', tokenError.message);
+          }
+          
+          // Actualizar el pedido para indicar que hubo un error con el token
+          await actualizarPedido(pedido_id, {
+            status: 'ERROR_TOKEN',
+            nuevoEstado: 'pendiente'
+          });
         }
       }
 
@@ -240,7 +297,13 @@ router.post('/crear-transaccion', async (req, res) => {
       const sessionId = 'SES-' + pedido_id;
       const returnUrl = `${BASE_URL}/api/webpay/retorno`;
 
-      console.log('[Webpay] Iniciando transacción:', { buyOrder, sessionId, monto: pedido.monto, returnUrl });
+      console.log('[Webpay] Iniciando nueva transacción:', { buyOrder, sessionId, monto: pedido.monto, returnUrl });
+      
+      // Actualizamos el estado del pedido antes de iniciar la transacción
+      await actualizarPedido(pedido_id, {
+        status: 'PREPARANDO',
+        nuevoEstado: 'pendiente'
+      });
 
       const transaction = new WebpayPlus.Transaction(options);
       const response = await transaction.create(buyOrder, sessionId, pedido.monto, returnUrl);
@@ -251,10 +314,11 @@ router.post('/crear-transaccion', async (req, res) => {
       const pedidoActualizado = await actualizarPedido(pedido_id, {
         token: response.token,
         status: 'INICIADA',
-        buyOrder: buyOrder
+        buyOrder: buyOrder,
+        nuevoEstado: 'en_proceso'
       });
 
-      console.log('[Webpay] Pedido actualizado:', pedidoActualizado);
+      console.log('[Webpay] Pedido actualizado con nuevo token:', pedidoActualizado);
 
       // Formatear el monto para mostrar
       const montoFormateado = new Intl.NumberFormat('es-CL', {
@@ -429,13 +493,42 @@ router.post('/crear-transaccion', async (req, res) => {
     } catch (error) {
       console.error('[Webpay] Error al crear transacción:', error);
       
+      // Obtener un mensaje de error más amigable basado en el tipo de error
+      let mensajeError = 'Ha ocurrido un error al intentar iniciar el proceso de pago.';
+      let detalleError = error.message || 'Error desconocido';
+      
+      if (error.message.includes('timeout') || error.message.includes('tiempo')) {
+        mensajeError = 'La comunicación con el servidor de pagos ha tardado demasiado.';
+        detalleError = 'Error de tiempo de espera';
+      } else if (error.message.includes('network') || error.message.includes('red')) {
+        mensajeError = 'Hubo un problema de red al comunicarse con el servidor de pagos.';
+        detalleError = 'Error de red';
+      } else if (error.message.includes('token')) {
+        mensajeError = 'Hubo un problema con la validación del pago.';
+        detalleError = 'Error de validación de token';
+      }
+      
+      // Actualizar el pedido con el estado de error si es posible
+      if (pedido_id) {
+        try {
+          await actualizarPedido(pedido_id, {
+            status: 'ERROR_CREACION',
+            nuevoEstado: 'error'
+          });
+          console.log('[Webpay] Pedido marcado con estado de error:', pedido_id);
+        } catch (updateError) {
+          console.error('[Webpay] Error adicional al intentar actualizar estado de error:', updateError);
+        }
+      }
+      
       // HTML para error
       const htmlError = generarHtmlRespuesta({
         titulo: 'Error al Procesar Pago',
-        mensaje: 'Ha ocurrido un error al intentar iniciar el proceso de pago.',
+        mensaje: mensajeError,
         detalles: [
-          { etiqueta: 'Error', valor: error.message || 'Error desconocido' },
-          { etiqueta: 'Código', valor: error.code || 'N/A' }
+          { etiqueta: 'Detalle', valor: detalleError },
+          { etiqueta: 'Código', valor: error.code || 'N/A' },
+          { etiqueta: 'Acción recomendada', valor: 'Intente nuevamente en unos minutos' }
         ],
         esExito: false,
         redireccion: `${BASE_URL}`,
