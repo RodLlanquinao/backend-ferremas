@@ -92,7 +92,7 @@ backendferremas/
    npm install
    ```
 
-1. **Configurar variables de entorno**
+2. **Configurar variables de entorno**
    Crea un archivo `.env` con las siguientes variables:
    ```
    PORT=3000
@@ -101,7 +101,7 @@ backendferremas/
    CORS_ORIGIN=*
    ```
 
-2. **Ejecutar en desarrollo**
+3. **Ejecutar en desarrollo**
    ```bash
    npm run dev
    ```
