@@ -285,36 +285,92 @@ Todas las respuestas de la API siguen este formato estándar:
 }
 ```
 
-## 🧪 Pruebas
+## 🧪 Pruebas y Documentación
 
-### Verificar Estado
-```bash
-curl http://localhost:3000/health
-```
+### Colección de Postman
+El proyecto incluye una colección completa de Postman (`postman_collection.json`) que contiene todos los endpoints disponibles, incluyendo la integración con Transbank.
 
-### Procesamiento de Pagos con Transbank
+### Importar la Colección en Postman
+1. Abrir Postman
+2. Hacer clic en "Import" (Importar)
+3. Seleccionar el archivo `postman_collection.json` ubicado en la raíz del proyecto
+4. Todas las solicitudes estarán organizadas en carpetas por funcionalidad
 
-#### Iniciar un pago (usando curl)
-```bash
-curl -X POST http://localhost:3000/api/webpay/crear-transaccion \
-  -H "Content-Type: application/json" \
-  -d '{"pedido_id": 14}'
-```
+### Variables de Entorno en Postman
+La colección utiliza las siguientes variables que puedes configurar en tu entorno:
+- `producto_id`: ID del producto para pruebas
+- `usuario_id`: ID del usuario para pruebas
+- `pedido_id`: ID del pedido para pruebas
+- `mensaje_id`: ID del mensaje de contacto para pruebas
+- `token_ws`: Token de transacción generado por Webpay
 
-#### Script de prueba de pago (multiplataforma)
-Para probar el flujo de pago de forma interactiva, utiliza el script Node.js multiplataforma:
+### Grupos de Endpoints en la Colección
 
-```bash
-# Funciona en Windows, Mac y Linux
-node webpay-test.js
-```
+#### Health Check
+- **GET** `/`: Endpoint base
+- **GET** `/health`: Verificar estado del servidor y BD
 
-#### Script de prueba de pago (solo Mac/Linux)
-```bash
-# Solo para Mac/Linux
-chmod +x webpay-test.sh
-./webpay-test.sh
-```
+#### Productos
+- **GET** `/productos`: Listar todos los productos
+- **GET** `/productos/:id`: Obtener producto por ID
+- **GET** `/productos/categoria/:nombre`: Productos por categoría
+- **POST** `/productos`: Crear producto
+- **PUT** `/productos/:id`: Actualizar producto
+- **DELETE** `/productos/:id`: Eliminar producto
+
+#### Usuarios
+- **GET** `/usuarios/:id`: Obtener usuario
+- **POST** `/usuarios`: Crear usuario
+- **PUT** `/usuarios/:id`: Actualizar usuario
+- **DELETE** `/usuarios/:id`: Eliminar usuario
+
+#### Pedidos
+- **GET** `/pedidos/:id`: Obtener pedido
+- **GET** `/pedidos/usuario/:usuarioId`: Pedidos por usuario
+- **POST** `/pedidos`: Crear pedido
+- **PUT** `/pedidos/:id`: Actualizar pedido
+- **DELETE** `/pedidos/:id`: Eliminar pedido
+
+#### Contacto
+- **GET** `/contacto`: Listar mensajes
+- **GET** `/contacto/:id`: Obtener mensaje
+- **POST** `/contacto`: Crear mensaje
+- **DELETE** `/contacto/:id`: Eliminar mensaje
+
+#### Webpay (Procesamiento de Pagos)
+- **POST** `/api/webpay/crear-transaccion`: Iniciar pago
+- **POST** `/api/webpay/retorno`: Endpoint de retorno tras pago
+- **GET** `/api/webpay/retorno`: Página final post-pago
+
+### Pruebas de Procesamiento de Pagos con Transbank
+
+#### Flujo Completo de Prueba de Pago
+
+1. **Crear un pedido** (usando Postman)
+   - Usar la solicitud "Crear pedido" en la carpeta "Pedidos"
+   - Configurar la variable `pedido_id` con el ID recibido
+
+2. **Iniciar el pago** (3 opciones)
+   - **Opción 1 - Postman**: Usar la solicitud "Crear transacción" en la carpeta "Webpay"
+   - **Opción 2 - Script Node.js** (multiplataforma):
+     ```bash
+     # Funciona en Windows, Mac y Linux
+     node webpay-test.js
+     ```
+   - **Opción 3 - Script Bash** (solo Mac/Linux):
+     ```bash
+     # Solo para Mac/Linux
+     chmod +x webpay-test.sh
+     ./webpay-test.sh
+     ```
+
+3. **Completar el pago en Webpay**
+   - Se abrirá una página web con el formulario de pago
+   - Utilizar las tarjetas de prueba (información más abajo)
+
+4. **Verificar resultado**
+   - Después del pago, serás redirigido a la página de confirmación
+   - Verificar en la base de datos que el pedido se ha actualizado correctamente
 
 ### Datos de prueba para Transbank
 
@@ -335,86 +391,19 @@ chmod +x webpay-test.sh
 - CVV: 123
 - Expiración: Cualquiera en el futuro
 
-### Ejemplos de Uso con Casos Reales
+### Diagrama de Flujo de Pago
 
-#### Obtener Todos los Productos
-```bash
-curl http://localhost:3000/productos
 ```
-
-#### Crear un Producto
-```bash
-curl -X POST http://localhost:3000/productos \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Test Product API",
-    "modelo": "TEST-API",
-    "marca": "TestAPI",
-    "codigo": "API-TEST-001",
-    "precio": 9990,
-    "stock": 10,
-    "categoria": "Test",
-    "descripcion": "Producto de prueba API"
-  }'
-```
-
-#### Actualizar un Producto
-```bash
-curl -X PUT http://localhost:3000/productos/56 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Test Product API Updated",
-    "modelo": "TEST-API",
-    "marca": "TestAPI",
-    "codigo": "API-TEST-001",
-    "precio": 10990,
-    "stock": 15,
-    "categoria": "Test",
-    "descripcion": "Producto de prueba API actualizado"
-  }'
-```
-
-#### Crear un Usuario
-```bash
-curl -X POST http://localhost:3000/usuarios \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Usuario Test API",
-    "email": "test.api@example.com",
-    "telefono": "+56912345999",
-    "direccion": "Calle Test 123"
-  }'
-```
-
-#### Crear un Pedido
-```bash
-curl -X POST http://localhost:3000/pedidos \
-  -H "Content-Type: application/json" \
-  -d '{
-    "producto_id": 56, 
-    "usuario_id": 10, 
-    "cantidad": 2, 
-    "estado": "pendiente"
-  }'
-
-# Iniciar el proceso de pago para el pedido creado
-curl -X POST http://localhost:3000/api/webpay/crear-transaccion \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pedido_id": 10
-  }'
-```
-
-#### Crear un Mensaje de Contacto
-```bash
-curl -X POST http://localhost:3000/contacto \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Usuario Test API",
-    "email": "test.api@example.com",
-    "asunto": "Test API Message",
-    "mensaje": "Este es un mensaje de prueba enviado a través de la API"
-  }'
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  1. Crear   │     │ 2. Iniciar  │     │  3. Webpay  │
+│   Pedido    │────▶│    Pago     │────▶│  Formulario │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                               │
+┌─────────────┐     ┌─────────────┐            ▼
+│ 6. Mostrar  │     │ 5. Procesar │     ┌─────────────┐
+│Confirmación │◀────│  Resultado  │◀────│ 4. Ingresar │
+└─────────────┘     └─────────────┘     │   Tarjeta   │
+                                        └─────────────┘
 ```
 
 ## 🔒 Seguridad
