@@ -113,11 +113,6 @@ config.local.js
 # yarn.lock
 # pnpm-lock.yaml
 
-# Generated API documentation
-docs/
-api-docs/
-jsdoc/
-
 # Database files
 *.sqlite
 *.sqlite3
