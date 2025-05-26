@@ -1,4 +1,4 @@
-# FERREMAS Backend API
+# FERREMAS Backend API v2 con Integración Transbank
 
 [![Railway Deployment](https://railway.app/button.svg)](https://railway.app/project/ferremas-backend)
 
@@ -7,10 +7,12 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v14.1-orange)
 ![CORS](https://img.shields.io/badge/CORS-enabled-yellow)
 ![SSL](https://img.shields.io/badge/SSL-enabled-purple)
+![Transbank](https://img.shields.io/badge/Transbank-integrated-red)
+![Webpay](https://img.shields.io/badge/Webpay%20Plus-v6.0.0-brightgreen)
 
 ## Descripción del Proyecto
 
-FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos y mensajes de contacto, utilizando PostgreSQL como base de datos. La aplicación está desplegada en Railway y utiliza PostgreSQL como base de datos.
+FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería con procesamiento de pagos integrado. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos, mensajes de contacto y procesamiento de pagos con Webpay de Transbank, utilizando PostgreSQL como base de datos. La aplicación está desplegada en Railway y utiliza PostgreSQL como base de datos.
 
 ## 🚀 Despliegue en Railway
 
@@ -36,8 +38,10 @@ El proyecto está configurado para desplegarse automáticamente en Railway con:
 - ✅ **Gestión de Usuarios**: Administración de usuarios con roles
 - ✅ **Sistema de Pedidos**: Creación y gestión de pedidos
 - ✅ **Formulario de Contacto**: Recepción y almacenamiento de mensajes
+- ✅ **Procesamiento de Pagos**: Integración completa con Webpay Plus de Transbank
 - ✅ **Base de Datos PostgreSQL**: Conexión segura con SSL
 - ✅ **Arquitectura MVC**: Separación clara de responsabilidades
+- ✅ **Scripts de Prueba**: Herramientas multiplataforma para probar pagos
 
 ## 📁 Estructura del Proyecto
 
@@ -63,14 +67,19 @@ backendferremas/
 │   ├── productos.routes.js
 │   ├── usuarios.routes.js
 │   ├── pedidos.routes.js
-│   └── contacto.routes.js
+│   ├── contacto.routes.js
+│   └── webpay.routes.js     # Rutas para procesamiento de pagos
 ├── utils/
 │   └── responseHelper.js    # Helpers para respuestas
+├── scripts/
+│   └── test-db.js           # Pruebas de conexión a BD
+├── webpay-test.js           # Script multiplataforma para pruebas de pago
+├── webpay-test.sh           # Script bash para pruebas de pago
 ├── docs/
-│   ├── API.md              # Documentación de la API
-│   └── POSTMAN_GUIDE.md    # Guía de Postman
+│   ├── API.md               # Documentación de la API
+│   └── POSTMAN_GUIDE.md     # Guía de Postman
 └── package.json
-\`\`\`
+```
 
 ## 🔧 Configuración Local
 
@@ -145,12 +154,21 @@ La base de datos está configurada automáticamente a través de la integración
 
 Las siguientes tablas están disponibles en la base de datos:
 
-- ✅ \`productos\` - Catálogo de productos
-- ✅ \`usuarios\` - Gestión de usuarios
-- ✅ \`pedidos\` - Sistema de pedidos
-- ✅ \`contactos\` - Mensajes de contacto
+- ✅ `productos` - Catálogo de productos
+- ✅ `usuarios` - Gestión de usuarios
+- ✅ `pedidos` - Sistema de pedidos (ahora con campos de pago)
+- ✅ `contactos` - Mensajes de contacto
 
-## 📡 Endpoints Disponibles
+### Campos adicionales para pagos
+
+La tabla `pedidos` ahora incluye los siguientes campos adicionales:
+
+- ✅ `monto` - Monto total del pedido
+- ✅ `transbank_token` - Token de la transacción generado por Webpay
+- ✅ `transbank_status` - Estado de la transacción (INICIADA, AUTHORIZED, FAILED, etc.)
+- ✅ `buy_order` - Número de orden de compra generado para Webpay
+
+## 🔌 Endpoints Disponibles
 
 ### Estado del Servidor
 - `GET /` - Información básica
@@ -182,6 +200,11 @@ Las siguientes tablas están disponibles en la base de datos:
 - `GET /contacto/:id` - Obtener por ID
 - `POST /contacto` - Crear mensaje
 - `DELETE /contacto/:id` - Eliminar
+
+### Procesamiento de Pagos (Nuevo)
+- `POST /api/webpay/crear-transaccion` - Iniciar proceso de pago
+- `POST /api/webpay/retorno` - Endpoint de retorno para Webpay
+- `GET /api/webpay/retorno` - Página final después del pago
 
 ## 📋 Ejemplos de Respuestas
 
@@ -269,6 +292,49 @@ Todas las respuestas de la API siguen este formato estándar:
 curl http://localhost:3000/health
 ```
 
+### Procesamiento de Pagos con Transbank
+
+#### Iniciar un pago (usando curl)
+```bash
+curl -X POST http://localhost:3000/api/webpay/crear-transaccion \
+  -H "Content-Type: application/json" \
+  -d '{"pedido_id": 14}'
+```
+
+#### Script de prueba de pago (multiplataforma)
+Para probar el flujo de pago de forma interactiva, utiliza el script Node.js multiplataforma:
+
+```bash
+# Funciona en Windows, Mac y Linux
+node webpay-test.js
+```
+
+#### Script de prueba de pago (solo Mac/Linux)
+```bash
+# Solo para Mac/Linux
+chmod +x webpay-test.sh
+./webpay-test.sh
+```
+
+### Datos de prueba para Transbank
+
+#### Tarjeta de Crédito VISA (Aprobada)
+- Número: 4051 8856 0044 6623
+- CVV: 123
+- Fecha expiración: Cualquiera en el futuro
+- RUT: 11.111.111-1
+- Clave: 123
+
+#### Tarjeta de Débito (Aprobada)
+- Número Tarjeta: 4051 8842 3993 7763
+- RUT: 11.111.111-1
+- Clave: 123
+
+#### Para RECHAZAR un pago
+- Tarjeta: 5186 0595 5959 0568
+- CVV: 123
+- Expiración: Cualquiera en el futuro
+
 ### Ejemplos de Uso con Casos Reales
 
 #### Obtener Todos los Productos
@@ -330,6 +396,13 @@ curl -X POST http://localhost:3000/pedidos \
     "cantidad": 2, 
     "estado": "pendiente"
   }'
+
+# Iniciar el proceso de pago para el pedido creado
+curl -X POST http://localhost:3000/api/webpay/crear-transaccion \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pedido_id": 10
+  }'
 ```
 
 #### Crear un Mensaje de Contacto
@@ -377,7 +450,11 @@ El sistema implementa validaciones exhaustivas en todos los endpoints:
 - ✅ **Usuario ID**: Obligatorio, debe existir
 - ✅ **Cantidad**: Obligatorio, entero positivo
 - ✅ **Stock**: Verificación automática de disponibilidad
-- ✅ **Estado**: Valores permitidos: "pendiente", "enviado", "completado", "cancelado"
+- ✅ **Estado**: Valores permitidos: "pendiente", "pagado", "enviado", "completado", "cancelado", "error"
+- ✅ **Monto**: Calculado automáticamente en base al precio del producto y cantidad
+- ✅ **Token Transbank**: Generado automáticamente al iniciar un pago
+- ✅ **Estado Transbank**: Actualizado automáticamente según respuesta de Webpay
+- ✅ **Orden de Compra**: Generado automáticamente con formato ORD-{id}-{random}
 
 #### Contacto
 - ✅ **Nombre**: Obligatorio, string
@@ -442,6 +519,35 @@ El proyecto se despliega automáticamente en Railway cuando:
 - **Express.js**: Framework web
 - **PostgreSQL**: Base de datos relacional
 - **pg**: Cliente PostgreSQL para Node.js
+- **Transbank SDK**: Biblioteca oficial para integración con Webpay
+- **WebpayPlus**: Servicio de pago de Transbank
+
+## 💳 Integración con Transbank
+
+### Flujo de Pago
+
+1. **Creación del Pedido**: Se crea un pedido en la base de datos con estado "pendiente"
+2. **Inicio de Pago**: Se inicia el proceso de pago con una petición a `/api/webpay/crear-transaccion`
+3. **Generación de Token**: Se genera un token único para la transacción y se actualiza en la base de datos
+4. **Redirección a Webpay**: El usuario es redirigido a la página de pago de Webpay
+5. **Proceso de Pago**: El usuario ingresa los datos de su tarjeta en Webpay
+6. **Retorno**: Webpay redirecciona al usuario al endpoint `/api/webpay/retorno`
+7. **Confirmación**: Se verifica el estado de la transacción y se actualiza el pedido
+8. **Finalización**: Se muestra al usuario una página de confirmación
+
+### Modos de Integración
+
+- **Ambiente**: Integración (Testing)
+- **Tipo de Integración**: REST API con SDK oficial
+- **Versión SDK**: 6.0.0
+- **Tipo de Transacción**: WebpayPlus
+- **Estados de Transacción**: INICIADA, AUTHORIZED, FAILED, RECHAZADA, ERROR
+
+### Herramientas de Prueba
+
+- **webpay-test.js**: Script de prueba multiplataforma (Windows, Mac, Linux)
+- **webpay-test.sh**: Script bash para Mac/Linux
+- **curl**: Ejemplos de peticiones directas a la API
 
 ## Contribución
 
@@ -470,3 +576,5 @@ Para soporte técnico:
 **Base de Datos**: ✅ Railway PostgreSQL conectada
 **Última actualización**: 25 de mayo de 2025
 **Pruebas Completas**: ✅ Todos los endpoints verificados y funcionales
+**Integración Transbank**: ✅ Funcionando en ambiente de integración
+**Pagos con Webpay**: ✅ Flujo completo implementado y probado
