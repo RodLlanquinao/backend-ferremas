@@ -102,29 +102,7 @@ backendferremas/
    ```
 
 2. **Configurar variables de entorno**
-   El archivo `.env` está incluido en el repositorio ya que este es un ambiente académico controlado.
-   Variables configuradas:
-   ```
-   # Configuración del servidor
-   PORT=3000
-   NODE_ENV=development
-
-   # Configuración de la base de datos
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=ferremas
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-
-   # Configuración de Webpay (Ambiente de pruebas)
-   WEBPAY_COMMERCE_CODE=597055555532
-   WEBPAY_API_KEY=579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C
-   WEBPAY_ENVIRONMENT=integration
-
-   # URLs de retorno
-   RETURN_URL=http://localhost:3000/api/webpay/retorno
-   FINAL_URL=http://localhost:3000/api/webpay/final
-   ```
+   El archivo `.env` está incluido en el repositorio ya que esta es una evaluación en un ambiente controlado.
 
 3. **Ejecutar en desarrollo**
    ```bash
