@@ -1,7 +1,5 @@
 # FERREMAS Backend API v2 con Integración Transbank
 
-[![Railway Deployment](https://railway.app/button.svg)](https://railway.app/project/ferremas-backend)
-
 ![Node.js](https://img.shields.io/badge/Node.js-v16.13.1-green)
 ![Express.js](https://img.shields.io/badge/Express.js-v4.17.1-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v14.1-orange)
@@ -20,26 +18,26 @@ Este proyecto está completamente preparado para su evaluación académica. Incl
 - ✅ Variables de entorno incluidas (ambiente académico controlado)
 - ✅ Documentación completa
 
-## Descripción del Proyecto
+## ℹ️ Nota Importante
 
-FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería con procesamiento de pagos integrado. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos, mensajes de contacto y procesamiento de pagos con Webpay de Transbank, utilizando PostgreSQL como base de datos. La aplicación está desplegada en Railway y utiliza PostgreSQL como base de datos.
+Este proyecto está configurado específicamente para una evaluación académica en un ambiente controlado. Por esta razón:
 
-## 🚀 Despliegue en Railway
+- El archivo `.env` está incluido en el repositorio
+- Las credenciales de Webpay son de prueba (ambiente de integración)
+- La configuración está optimizada para desarrollo local
+- El acceso está limitado al equipo evaluador
 
-### URL de Producción
+Esta configuración no sigue las prácticas de seguridad estándar para un ambiente de producción, ya que su propósito es académico y de evaluación.
+
+## 🗺️ Descripción del Proyecto
+
+FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería con procesamiento de pagos integrado. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos, mensajes de contacto y procesamiento de pagos con Webpay de Transbank, utilizando PostgreSQL como base de datos.
+
+### URL de Desarrollo
 ```
 http://localhost:3000
 ```
-### Documentación de la API
-
-### Configuración Automática
-
-El proyecto está configurado para desplegarse automáticamente en Railway con:
-
-- ✅ **Base de Datos PostgreSQL**: Integración automática con PostgreSQL de Railway
-- ✅ **Variables de Entorno**: Configuración automática desde Railway
-- ✅ **CORS**: Configurado para permitir peticiones desde cualquier origen
-- ✅ **SSL**: Conexión segura a la base de datos
+### Documentación de la API 🚀
 
 ## Características Principales
 
@@ -90,51 +88,28 @@ backendferremas/
 └── package.json
 ```
 
-## 🔧 Configuración Local
+## 🔧 Configuración y Ejecución
 
-### Desarrollo Local
-
-1. **Clonar y configurar**
+1. **Clonar el repositorio**
    ```bash
    git clone <repository-url>
-   cd backendferremas
+   cd backendferremasv2trans
+   ```
+
+2. **Instalar dependencias**
+   ```bash
    pnpm install
    ```
 
-2. **Configurar variables de entorno**
-   El archivo `.env` está incluido en el repositorio ya que esta es una evaluación en un ambiente controlado.
+3. **Variables de entorno**
+   El archivo `.env` ya está incluido en el proyecto con todas las configuraciones necesarias para el ambiente de evaluación académica.
 
-3. **Ejecutar en desarrollo**
+4. **Iniciar el servidor**
    ```bash
    node index.js
    ```
 
-### Despliegue en Railway
-
-1. **Instalar Railway CLI** (opcional)
-   ```bash
-   npm i -g @railway/cli
-   ```
-
-2. **Iniciar sesión en Railway**
-   ```bash
-   railway login
-   ```
-
-3. **Vincular proyecto existente**
-   ```bash
-   railway link
-   ```
-
-4. **Desplegar a Railway**
-   ```bash
-   railway up
-   ```
-
-5. **Configurar variables de entorno en Railway** (también se puede hacer desde el dashboard)
-   ```bash
-   railway variables set KEY=VALUE
-   ```
+El servidor estará disponible en http://localhost:3000
 
 ## Requisitos Previos
 
@@ -144,16 +119,10 @@ backendferremas/
 
 ## 🗄️ Base de Datos
 
-### Configuración Automática
+### Configuración Local
+La base de datos PostgreSQL debe estar configurada localmente con las credenciales especificadas en el archivo `.env` incluido en el proyecto.
 
-La base de datos está configurada automáticamente a través de la integración de PostgreSQL en Railway:
-
-- **Host**: Proporcionado por Railway
-- **SSL**: Habilitado automáticamente
-- **Pool de Conexiones**: Optimizado para contenedores
-- **Variables**: Configuradas automáticamente
-
-### Tablas Creadas
+### Tablas Disponibles
 
 Las siguientes tablas están disponibles en la base de datos:
 
@@ -488,16 +457,14 @@ Ejemplo real:
 
 ### Monitoreo en Tiempo Real
 
-Los logs están disponibles en:
-- Local: Archivo `server.log` en la raíz del proyecto
-- Producción: Dashboard de Railway
+Los logs están disponibles en el archivo `server.log` en la raíz del proyecto.
 
-## 🚀 Despliegue Automático
+## 🚀 Despliegue
 
-El proyecto se despliega automáticamente en Railway cuando:
-1. Se hace push al repositorio conectado a Railway
-2. Se ejecuta `railway up`
-3. Se actualiza desde el dashboard de Railway
+Para iniciar el servidor localmente:
+```bash
+node index.js
+```
 
 ## Tecnologías Utilizadas
 
@@ -551,17 +518,17 @@ El proyecto se despliega automáticamente en Railway cuando:
 ## 🆘 Soporte
 
 Para soporte técnico:
-1. Revisar los logs en Railway Dashboard
+1. Revisar los logs en el archivo `server.log`
 2. Verificar el estado de la base de datos PostgreSQL
 3. Consultar la documentación de la API
-4. Verificar las variables de entorno en Railway
+4. Verificar la configuración en el archivo `.env`
 
 ---
 
 **Nota sobre Variables de Entorno**: ⚠️ Las variables de entorno están incluidas intencionalmente en el repositorio ya que este es un ambiente académico controlado y las credenciales son de prueba (Webpay Integration).
 
-**Estado**: ✅ Desplegado y funcionando en Railway
-**Base de Datos**: ✅ Railway PostgreSQL conectada
+**Estado**: ✅ Listo para evaluación académica
+**Base de Datos**: ✅ Configurada para entorno local
 **Última actualización**: 25 de mayo de 2025
 **Pruebas Completas**: ✅ Todos los endpoints verificados y funcionales
 **Integración Transbank**: ✅ Funcionando en ambiente de integración
