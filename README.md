@@ -88,14 +88,14 @@ backendferremas/
    ```bash
    git clone <repository-url>
    cd backendferremas
-   npm install
+   pnpm install
    ```
 
 2. **Configurar variables de entorno**
    Crea un archivo `.env` con las siguientes variables:
    ```
    PORT=3000
-   NODE_ENV=development
+   NODE_ENV=integration
    DATABASE_URL=tu_url_de_postgresql
    CORS_ORIGIN=*
    ```
