@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "FERREMAS Backend API",
-    "description": "Colección de endpoints para el backend de FERREMAS - Incluye flujo completo de pedidos y pagos con Webpay\n\nEstados de Pedido:\n1. pendiente: Estado inicial al crear el pedido\n2. en_proceso: Cuando se inicia el pago con Webpay\n3. pagado: Cuando el pago es confirmado por Webpay\n4. rechazado: Cuando el pago es rechazado o cancelado\n\nEstados de Error:\n- error: Error general en el proceso\n- ERROR_TOKEN: Error al validar el token de Webpay\n- ERROR_CREACION: Error al crear la transacción en Webpay\n\nFlujo típico de un pedido:\n1. POST /pedidos → Crear pedido (estado: pendiente)\n2. POST /api/webpay/crear-transaccion → Iniciar pago (estado: en_proceso)\n3. POST /api/webpay/retorno → Confirmar pago (estado: pagado/rechazado)",
+    "description": "Colección de endpoints para el backend de FERREMAS - Incluye flujo completo de pedidos y pagos con Webpay\nFlujo típico de un pedido:\n1. POST /pedidos → Crear pedido (estado: pendiente)\n2. POST /api/webpay/crear-transaccion → Iniciar pago (estado: en_proceso)\n3. POST /api/webpay/retorno → Confirmar pago (estado: pagado/rechazado)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
