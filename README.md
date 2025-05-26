@@ -26,7 +26,6 @@ http://localhost:3000
 
 El proyecto está configurado para desplegarse automáticamente en Railway con:
 
-- ✅ **Contenedor Docker**: Despliegue en contenedor para mejor rendimiento
 - ✅ **Base de Datos PostgreSQL**: Integración automática con PostgreSQL de Railway
 - ✅ **Variables de Entorno**: Configuración automática desde Railway
 - ✅ **CORS**: Configurado para permitir peticiones desde cualquier origen
