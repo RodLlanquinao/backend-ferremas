@@ -1,4 +1,4 @@
-# FERREMAS Backend API v2 con Integración Transbank
+# FERREMAS Backend API v1.4 con Integración Transbank
 
 ![Node.js](https://img.shields.io/badge/Node.js-v16.13.1-green)
 ![Express.js](https://img.shields.io/badge/Express.js-v4.17.1-blue)
@@ -53,7 +53,7 @@ http://localhost:3000
 ## 📁 Estructura del Proyecto
 
 ```
-backendferremas/
+backend-ferremas/
 ├── config/
 │   ├── database.js          # Configuración de PostgreSQL DB
 │   └── environment.js       # Variables de entorno
@@ -93,7 +93,7 @@ backendferremas/
 1. **Clonar el repositorio**
    ```bash
    git clone <repository-url>
-   cd backendferremasv2trans
+   cd backend-ferremas
    ```
 
 2. **Instalar dependencias**
@@ -174,9 +174,9 @@ La tabla `pedidos` ahora incluye los siguientes campos adicionales:
 - `DELETE /contacto/:id` - Eliminar
 
 ### Procesamiento de Pagos (Nuevo)
-- `POST /api/webpay/crear-transaccion` - Iniciar proceso de pago
-- `POST /api/webpay/retorno` - Endpoint de retorno para Webpay
-- `GET /api/webpay/retorno` - Página final después del pago
+- `POST /webpay/crear-transaccion` - Iniciar proceso de pago
+- `POST /webpay/retorno` - Endpoint de retorno para Webpay
+- `GET  /webpay/retorno` - Página final después del pago
 
 ## 📋 Ejemplos de Respuestas
 
@@ -283,36 +283,36 @@ La colección utiliza las siguientes variables que puedes configurar en tu entor
 - **GET** `/health`: Verificar estado del servidor y BD
 
 #### Productos
-- **GET** `/productos`: Listar todos los productos
-- **GET** `/productos/:id`: Obtener producto por ID
-- **GET** `/productos/categoria/:nombre`: Productos por categoría
-- **POST** `/productos`: Crear producto
-- **PUT** `/productos/:id`: Actualizar producto
+- **GET**    `/productos`: Listar todos los productos
+- **GET**    `/productos/:id`: Obtener producto por ID
+- **GET**    `/productos/categoria/:nombre`: Productos por categoría
+- **POST**   `/productos`: Crear producto
+- **PUT**    `/productos/:id`: Actualizar producto
 - **DELETE** `/productos/:id`: Eliminar producto
 
 #### Usuarios
-- **GET** `/usuarios/:id`: Obtener usuario
-- **POST** `/usuarios`: Crear usuario
-- **PUT** `/usuarios/:id`: Actualizar usuario
+- **GET**    `/usuarios/:id`: Obtener usuario
+- **POST**   `/usuarios`: Crear usuario
+- **PUT**    `/usuarios/:id`: Actualizar usuario
 - **DELETE** `/usuarios/:id`: Eliminar usuario
 
 #### Pedidos
-- **GET** `/pedidos/:id`: Obtener pedido
-- **GET** `/pedidos/usuario/:usuarioId`: Pedidos por usuario
-- **POST** `/pedidos`: Crear pedido
-- **PUT** `/pedidos/:id`: Actualizar pedido
+- **GET**    `/pedidos/:id`: Obtener pedido
+- **GET**    `/pedidos/usuario/:usuarioId`: Pedidos por usuario
+- **POST**   `/pedidos`: Crear pedido
+- **PUT**    `/pedidos/:id`: Actualizar pedido
 - **DELETE** `/pedidos/:id`: Eliminar pedido
 
 #### Contacto
-- **GET** `/contacto`: Listar mensajes
-- **GET** `/contacto/:id`: Obtener mensaje
-- **POST** `/contacto`: Crear mensaje
+- **GET**    `/contacto`: Listar mensajes
+- **GET**    `/contacto/:id`: Obtener mensaje
+- **POST**   `/contacto`: Crear mensaje
 - **DELETE** `/contacto/:id`: Eliminar mensaje
 
 #### Webpay (Procesamiento de Pagos)
-- **POST** `/api/webpay/crear-transaccion`: Iniciar pago
-- **POST** `/api/webpay/retorno`: Endpoint de retorno tras pago
-- **GET** `/api/webpay/retorno`: Página final post-pago
+- **POST** `/webpay/crear-transaccion`: Iniciar pago
+- **POST** `/webpay/retorno`: Endpoint de retorno tras pago
+- **GET**  `/webpay/retorno`: Página final post-pago
 
 ### Pruebas de Procesamiento de Pagos con Transbank
 
