@@ -10,6 +10,16 @@
 ![Transbank](https://img.shields.io/badge/Transbank-integrated-red)
 ![Webpay](https://img.shields.io/badge/Webpay%20Plus-v6.0.0-brightgreen)
 
+# 🎯 Estado del Proyecto: LISTO PARA EVALUACIÓN EV2
+
+Este proyecto está completamente preparado para su evaluación académica. Incluye:
+
+- ✅ Sistema de pedidos completamente funcional
+- ✅ Integración con Webpay implementada y probada
+- ✅ Colección de Postman actualizada
+- ✅ Variables de entorno incluidas (ambiente académico controlado)
+- ✅ Documentación completa
+
 ## Descripción del Proyecto
 
 FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería con procesamiento de pagos integrado. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos, mensajes de contacto y procesamiento de pagos con Webpay de Transbank, utilizando PostgreSQL como base de datos. La aplicación está desplegada en Railway y utiliza PostgreSQL como base de datos.
@@ -92,12 +102,28 @@ backendferremas/
    ```
 
 2. **Configurar variables de entorno**
-   Crea un archivo `.env` con las siguientes variables:
+   El archivo `.env` está incluido en el repositorio ya que este es un ambiente académico controlado.
+   Variables configuradas:
    ```
+   # Configuración del servidor
    PORT=3000
-   NODE_ENV=integration
-   DATABASE_URL=tu_url_de_postgresql
-   CORS_ORIGIN=*
+   NODE_ENV=development
+
+   # Configuración de la base de datos
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=ferremas
+   DB_USER=postgres
+   DB_PASSWORD=postgres
+
+   # Configuración de Webpay (Ambiente de pruebas)
+   WEBPAY_COMMERCE_CODE=597055555532
+   WEBPAY_API_KEY=579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C
+   WEBPAY_ENVIRONMENT=integration
+
+   # URLs de retorno
+   RETURN_URL=http://localhost:3000/api/webpay/retorno
+   FINAL_URL=http://localhost:3000/api/webpay/final
    ```
 
 3. **Ejecutar en desarrollo**
@@ -553,6 +579,8 @@ Para soporte técnico:
 4. Verificar las variables de entorno en Railway
 
 ---
+
+**Nota sobre Variables de Entorno**: ⚠️ Las variables de entorno están incluidas intencionalmente en el repositorio ya que este es un ambiente académico controlado y las credenciales son de prueba (Webpay Integration).
 
 **Estado**: ✅ Desplegado y funcionando en Railway
 **Base de Datos**: ✅ Railway PostgreSQL conectada
