@@ -162,6 +162,7 @@ webpay-payment.html
 .prettierrc.local.json
 .eslintrc.local.json
 config.local.js
+update_orders.js
 
 # Dependencies lock files (optional, uncomment to ignore)
 # package-lock.json
