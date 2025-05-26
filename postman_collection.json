@@ -1,0 +1,368 @@
+{
+  "info": {
+    "name": "FERREMAS Backend API",
+    "description": "Colección de endpoints para el backend de FERREMAS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Base endpoint",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/",
+            "description": "Endpoint base que confirma que el servidor está funcionando"
+          }
+        },
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/health",
+            "description": "Verifica el estado del servidor y la conexión a la base de datos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Listar productos",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/productos",
+            "description": "Obtiene todos los productos disponibles"
+          }
+        },
+        {
+          "name": "Obtener producto por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/productos/{{producto_id}}",
+            "description": "Obtiene un producto específico por su ID"
+          }
+        },
+        {
+          "name": "Crear producto",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sierra Circular\",\n  \"modelo\": \"SC-1200\",\n  \"marca\": \"DeWalt\",\n  \"codigo\": \"DW-SC1200\",\n  \"precio\": 89990,\n  \"stock\": 15,\n  \"categoria\": \"Herramientas Eléctricas\",\n  \"descripcion\": \"Sierra circular profesional 1200W\"\n}",
+              "description": "Datos del nuevo producto"
+            },
+            "description": "Crea un nuevo producto en el sistema"
+          }
+        },
+        {
+          "name": "Actualizar producto",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:3000/productos/{{producto_id}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sierra Circular\",\n  \"modelo\": \"SC-1200\",\n  \"marca\": \"DeWalt\",\n  \"codigo\": \"DW-SC1200\",\n  \"precio\": 94990,\n  \"stock\": 20,\n  \"categoria\": \"Herramientas Eléctricas\",\n  \"descripcion\": \"Sierra circular profesional 1200W con maleta\"\n}",
+              "description": "Datos actualizados del producto"
+            },
+            "description": "Actualiza un producto existente"
+          }
+        },
+        {
+          "name": "Eliminar producto",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:3000/productos/{{producto_id}}",
+            "description": "Elimina un producto del sistema"
+          }
+        },
+        {
+          "name": "Obtener productos por categoría",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/productos/categoria/{{categoria}}",
+            "description": "Obtiene todos los productos de una categoría específica"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Obtener usuario",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/usuarios/{{usuario_id}}",
+            "description": "Obtiene los datos de un usuario específico"
+          }
+        },
+        {
+          "name": "Crear usuario",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/usuarios",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Rodríguez\",\n  \"email\": \"carlos.rodriguez@test.com\",\n  \"telefono\": \"+56912345681\",\n  \"direccion\": \"Av. Principal 789\"\n}",
+              "description": "Datos del nuevo usuario"
+            },
+            "description": "Crea un nuevo usuario en el sistema"
+          }
+        },
+        {
+          "name": "Actualizar usuario",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:3000/usuarios/{{usuario_id}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Alberto Rodríguez\",\n  \"email\": \"carlos.rodriguez@test.com\",\n  \"rol\": \"cliente\"\n}",
+              "description": "Datos actualizados del usuario"
+            },
+            "description": "Actualiza los datos de un usuario existente"
+          }
+        },
+        {
+          "name": "Eliminar usuario",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:3000/usuarios/{{usuario_id}}",
+            "description": "Elimina un usuario del sistema"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "item": [
+        {
+          "name": "Obtener pedido por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/pedidos/{{pedido_id}}",
+            "description": "Obtiene los detalles de un pedido específico"
+          }
+        },
+        {
+          "name": "Obtener pedidos por usuario",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/pedidos/usuario/{{usuario_id}}",
+            "description": "Obtiene todos los pedidos de un usuario específico"
+          }
+        },
+        {
+          "name": "Crear pedido",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/pedidos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": 34,\n  \"usuario_id\": 9,\n  \"cantidad\": 1,\n  \"estado\": \"pendiente\"\n}",
+              "description": "Datos del nuevo pedido"
+            },
+            "description": "Crea un nuevo pedido en el sistema"
+          }
+        },
+        {
+          "name": "Actualizar pedido",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:3000/pedidos/{{pedido_id}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"completado\"\n}",
+              "description": "Datos actualizados del pedido"
+            },
+            "description": "Actualiza el estado u otros datos de un pedido existente"
+          }
+        },
+        {
+          "name": "Eliminar pedido",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:3000/pedidos/{{pedido_id}}",
+            "description": "Elimina un pedido del sistema"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contacto",
+      "item": [
+        {
+          "name": "Listar mensajes",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/contacto",
+            "description": "Obtiene todos los mensajes de contacto"
+          }
+        },
+        {
+          "name": "Obtener mensaje",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/contacto/{{mensaje_id}}",
+            "description": "Obtiene un mensaje de contacto específico"
+          }
+        },
+        {
+          "name": "Crear mensaje",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/contacto",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Rodríguez\",\n  \"email\": \"carlos.rodriguez@test.com\",\n  \"asunto\": \"Consulta sobre herramientas eléctricas\",\n  \"mensaje\": \"Me gustaría saber si tienen más modelos de sierras circulares disponibles.\"\n}",
+              "description": "Datos del nuevo mensaje de contacto"
+            },
+            "description": "Crea un nuevo mensaje de contacto"
+          }
+        },
+        {
+          "name": "Eliminar mensaje",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:3000/contacto/{{mensaje_id}}",
+            "description": "Elimina un mensaje de contacto"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webpay",
+      "item": [
+        {
+          "name": "Crear transacción",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/webpay/crear-transaccion",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedido_id\": {{pedido_id}}\n}",
+              "description": "ID del pedido para procesar el pago"
+            },
+            "description": "Inicia una transacción de pago con Webpay para un pedido específico"
+          }
+        },
+        {
+          "name": "Retorno de pago",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/webpay/retorno",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "token_ws",
+                  "value": "{{token_ws}}",
+                  "description": "Token de la transacción"
+                }
+              ]
+            },
+            "description": "URL de retorno después del proceso de pago"
+          }
+        },
+        {
+          "name": "Página final",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/api/webpay/retorno",
+            "description": "Página final mostrada después del proceso de pago"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "producto_id",
+      "value": "34",
+      "description": "ID del producto de ejemplo"
+    },
+    {
+      "key": "usuario_id",
+      "value": "9",
+      "description": "ID del usuario de ejemplo"
+    },
+    {
+      "key": "pedido_id",
+      "value": "7",
+      "description": "ID del pedido de ejemplo"
+    },
+    {
+      "key": "mensaje_id",
+      "value": "17",
+      "description": "ID del mensaje de contacto de ejemplo"
+    },
+    {
+      "key": "categoria",
+      "value": "Herramientas Eléctricas",
+      "description": "Nombre de la categoría de ejemplo"
+    },
+    {
+      "key": "token_ws",
+      "value": "",
+      "description": "Token de transacción Webpay"
+    }
+  ]
+}
+
