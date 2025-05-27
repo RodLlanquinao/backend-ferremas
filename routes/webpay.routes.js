@@ -14,7 +14,7 @@ const options = new Options(
 // URL de retorno basada en el ambiente
 const BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://tu-dominio-produccion.com'
-  : 'http://localhost:3000';
+  : 'http://localhost:8000';
 
 // Función auxiliar para actualizar el pedido con datos de Transbank
 async function actualizarPedido(id, datos) {
@@ -661,17 +661,18 @@ router.post('/retorno', async (req, res) => {
     // Generar respuesta HTML según estado de la transacción
     if (result.status === 'AUTHORIZED') {
       const htmlExito = generarHtmlRespuesta({
-        titulo: 'Pago Exitoso',
-        mensaje: '¡Tu pago ha sido procesado correctamente!',
+        titulo: '¡Pago Exitoso!',
+        mensaje: '¡Tu pago ha sido procesado correctamente! Estamos preparando tu pedido.',
         detalles: [
           { etiqueta: 'Orden', valor: result.buyOrder },
           { etiqueta: 'Monto pagado', valor: montoFormateado },
           { etiqueta: 'Estado', valor: 'Autorizado' },
-          { etiqueta: 'Fecha', valor: new Date().toLocaleString('es-CL') }
+          { etiqueta: 'Fecha', valor: new Date().toLocaleString('es-CL') },
+          { etiqueta: 'Transacción', valor: token.substring(0, 8) + '...' }
         ],
         esExito: true,
         redireccion: `${BASE_URL}/api/webpay/retorno`,
-        segundosRedireccion: 3
+        segundosRedireccion: 8
       });
       
       return res.status(200).send(htmlExito);
@@ -746,16 +747,186 @@ router.post('/retorno', async (req, res) => {
 
 // 3. Ruta GET para mostrar después del pago (pantalla final)
 router.get('/retorno', (req, res) => {
-  // Usar el generador de HTML para la página final
-  const htmlFinal = generarHtmlRespuesta({
-    titulo: 'Pago Procesado',
-    mensaje: 'Gracias por tu compra. Tu pedido ha sido registrado correctamente.',
-    detalles: [
-      { etiqueta: 'Estado', valor: 'Completado' },
-      { etiqueta: 'Fecha', valor: new Date().toLocaleString('es-CL') }
-    ],
-    esExito: true
-  });
+  // Usar el generador de HTML para la página final con diseño mejorado
+  const htmlFinal = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Completado - Ferremas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        }
+        .container {
+            background-color: white;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 650px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .container:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #28a745, #34d058);
+        }
+        .header {
+            margin-bottom: 2.5rem;
+        }
+        .header h1 {
+            color: #28a745;
+            margin-bottom: 1rem;
+            font-size: 2.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header h1:before {
+            content: "✅";
+            margin-right: 15px;
+            font-size: 2.6rem;
+        }
+        .success-animation {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .success-animation:before {
+            content: "✓";
+            font-size: 60px;
+            color: #28a745;
+            font-weight: bold;
+        }
+        .success-animation:after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid #28a745;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+        .details {
+            margin: 2rem 0;
+            text-align: left;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            border-left: 5px solid #28a745;
+        }
+        .details p {
+            margin: 0.8rem 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        .message {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #4a5568;
+            margin-bottom: 2rem;
+        }
+        .button {
+            background-color: #28a745;
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .footer {
+            margin-top: 2.5rem;
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        .footer p {
+            margin: 0.5rem 0;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .details p {
+                font-size: 1.1rem;
+            }
+            .button {
+                padding: 14px 28px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-animation"></div>
+        <div class="header">
+            <h1>¡Pago Completado!</h1>
+        </div>
+        <p class="message">Gracias por tu compra. Tu pedido ha sido registrado correctamente y está siendo procesado.</p>
+        <div class="details">
+            <p><strong>Estado:</strong> Completado</p>
+            <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-CL')}</p>
+            <p><strong>Referencia:</strong> ${Date.now().toString().substring(8)}</p>
+        </div>
+        <a href="${BASE_URL}" class="button">Volver a la Tienda</a>
+        <div class="footer">
+            <p>Se ha enviado un correo de confirmación con los detalles de tu compra.</p>
+            <p>Si tienes alguna pregunta, contáctanos a nuestro servicio al cliente.</p>
+        </div>
+    </div>
+</body>
+</html>`;
   
   res.status(200).send(htmlFinal);
 });
