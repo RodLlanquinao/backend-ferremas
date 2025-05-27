@@ -31,7 +31,7 @@ const colors = {
 // Configuración
 const CONFIG = {
   outputFile: 'webpay-payment.html',
-  serverUrl: 'http://localhost:3000',
+  serverUrl: 'http://localhost:8000',
   apiPath: '/api/webpay/crear-transaccion'
 };
 
