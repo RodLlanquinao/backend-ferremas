@@ -11,7 +11,8 @@ Esta guía proporciona instrucciones detalladas para utilizar la colección de P
 2. [Importación de la Colección](#importación-de-la-colección)
 3. [Configuración del Entorno](#configuración-del-entorno)
 4. [Pruebas Básicas](#pruebas-básicas)
-5. [Pruebas de Pago con Transbank](#pruebas-de-pago-con-transbank)
+5. [Pruebas de Autenticación con Firebase](#pruebas-de-autenticación-con-firebase)
+6. [Pruebas de Pago con Transbank](#pruebas-de-pago-con-transbank)
 6. [Respuestas de Ejemplo](#respuestas-de-ejemplo)
 7. [Solución de Problemas](#solución-de-problemas)
 8. [Consejos Avanzados](#consejos-avanzados)
@@ -23,6 +24,7 @@ Para utilizar esta colección de Postman, necesitarás:
 1. **Postman**: Descargar e instalar la última versión desde [postman.com](https://www.postman.com/downloads/)
 2. **FERREMAS Backend**: El servidor debe estar en ejecución en `http://localhost:8000`
 3. **Base de datos**: PostgreSQL configurado y funcionando
+4. **Firebase**: Configuración de Firebase completada en el backend (variables de entorno configuradas)
 
 ## Importación de la Colección
 
@@ -58,6 +60,9 @@ Añade las siguientes variables al entorno:
 | `pedido_id`    | `10`            | ID de un pedido para pruebas             |
 | `mensaje_id`   | `17`            | ID de un mensaje de contacto para pruebas|
 | `token_ws`     | _vacío_         | Se llenará automáticamente durante las pruebas de pago |
+| `firebase_id_token` | _vacío_     | Token de ID de Firebase para autenticación |
+| `test_user_email` | `test@example.com` | Email de usuario de prueba para Firebase |
+| `test_user_password` | `password123` | Contraseña de usuario de prueba para Firebase |
 
 5. Haz clic en "Save" para guardar el entorno
 6. Selecciona "FERREMAS Local" en el desplegable de entornos en la esquina superior derecha de Postman
@@ -113,6 +118,133 @@ La colección está organizada en carpetas por funcionalidad. Aquí te explicamo
 2. Selecciona "Crear mensaje"
 3. En la pestaña "Body", verifica que los datos JSON del mensaje sean correctos
 4. Haz clic en "Send"
+
+## Pruebas de Autenticación con Firebase
+
+La aplicación ahora incluye autenticación con Firebase. La carpeta "Authentication" en la colección contiene todos los endpoints necesarios para probar el flujo de autenticación.
+
+### Requisitos para Pruebas de Autenticación
+
+Para realizar pruebas de autenticación con Firebase, necesitarás:
+
+1. **Proyecto Firebase**: Configurado correctamente en el backend
+2. **Variables de Entorno**: Las variables `firebase_id_token`, `test_user_email` y `test_user_password` configuradas en tu entorno Postman
+
+### Flujo de Autenticación Paso a Paso
+
+#### 1. Verificar Estado de Firebase
+
+Antes de iniciar las pruebas de autenticación, es recomendable verificar que Firebase esté correctamente configurado:
+
+1. Expande la carpeta "Authentication"
+2. Selecciona "Firebase Status"
+3. Haz clic en "Send"
+4. Verifica que la respuesta indique que Firebase está inicializado correctamente
+
+#### 2. Registrar un Nuevo Usuario
+
+1. Selecciona "Register"
+2. En la pestaña "Body", verifica que los datos JSON tengan el formato:
+   ```json
+   {
+     "email": "{{test_user_email}}",
+     "password": "{{test_user_password}}",
+     "nombre": "Usuario Test",
+     "rol": "cliente"
+   }
+   ```
+3. Haz clic en "Send"
+4. Si el registro es exitoso, guarda el ID del usuario en la variable `usuario_id`
+
+> **NOTA**: Para pruebas en un entorno ya configurado, puedes omitir este paso si ya tienes usuarios registrados.
+
+#### 3. Iniciar Sesión y Obtener Token
+
+Para obtener un token de Firebase para las pruebas, hay dos opciones:
+
+**Opción 1: Usando una aplicación cliente de Firebase**
+1. Usa una aplicación cliente (web, móvil) para iniciar sesión con Firebase
+2. Obtén el token ID (`idToken`) después de la autenticación
+3. Copia este token y actualiza la variable de entorno `firebase_id_token` en Postman
+
+**Opción 2: Usando la verificación de token en Postman**
+1. Selecciona "Verify Token" en la carpeta "Authentication"
+2. En el cuerpo de la solicitud, proporciona un token válido:
+   ```json
+   {
+     "idToken": "tu_token_de_firebase_aquí"
+   }
+   ```
+3. Envía la solicitud para verificar que el token sea válido
+
+#### 4. Obtener Información del Usuario Autenticado
+
+Una vez que tengas un token válido:
+
+1. Selecciona "Get User Info" en la carpeta "Authentication"
+2. Verifica que el encabezado de autorización tenga el formato:
+   ```
+   Authorization: Bearer {{firebase_id_token}}
+   ```
+3. Haz clic en "Send"
+4. La respuesta debe contener la información del usuario autenticado
+
+### Usando Firebase Authentication en Otros Endpoints
+
+Todos los endpoints protegidos ahora requieren un token de Firebase válido. Para usarlos:
+
+1. Asegúrate de tener un valor válido en la variable `firebase_id_token`
+2. Verifica que el encabezado de autorización esté presente en las solicitudes:
+   ```
+   Authorization: Bearer {{firebase_id_token}}
+   ```
+
+### Ejemplos de Respuestas de Autenticación
+
+#### Respuesta de Registro Exitoso
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 9,
+    "nombre": "Usuario Test",
+    "email": "test@example.com",
+    "rol": "cliente",
+    "uid": "f1r3b4s3u1d123456789"
+  },
+  "message": "Usuario registrado exitosamente"
+}
+```
+
+#### Respuesta de Verificación de Token
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 9,
+      "uid": "f1r3b4s3u1d123456789",
+      "email": "test@example.com",
+      "nombre": "Usuario Test",
+      "rol": "cliente",
+      "emailVerified": true
+    }
+  },
+  "message": "Token verificado correctamente"
+}
+```
+
+#### Error por Token Inválido
+
+```json
+{
+  "success": false,
+  "error": "Token inválido o expirado",
+  "status": 401
+}
+```
 
 ## Pruebas de Pago con Transbank
 
@@ -286,6 +418,17 @@ Sigue los pasos anteriores usando la tarjeta de crédito aprobada.
 2. Comprueba que la URL base sea correcta en el entorno de Postman
 3. Prueba el endpoint de health check: `GET /health`
 
+### Errores de autenticación con Firebase
+
+**Problema**: Recibes errores 401 Unauthorized en endpoints protegidos.
+
+**Solución**:
+1. Verifica que Firebase esté correctamente configurado con `GET /auth/status`
+2. Asegúrate de tener un token válido en la variable `firebase_id_token`
+3. Comprueba que el token no haya expirado (duran 1 hora por defecto)
+4. Verifica el formato del encabezado: `Authorization: Bearer {{firebase_id_token}}`
+5. Obtén un nuevo token realizando el flujo de autenticación desde el principio
+
 ### Error al crear un pedido
 
 **Problema**: Recibes un error 400 al crear un pedido.
@@ -386,6 +529,8 @@ Postman permite capturar valores de respuestas y usarlos en solicitudes posterio
 - [Documentación Oficial de Postman](https://learning.postman.com/docs/getting-started/introduction/)
 - [Documentación de la API de FERREMAS](./API.md)
 - [Documentación de Transbank](https://www.transbankdevelopers.cl/documentacion/webpay-plus)
+- [Documentación de Firebase Authentication](https://firebase.google.com/docs/auth)
+- [Tokens de ID de Firebase](https://firebase.google.com/docs/auth/admin/verify-id-tokens)
 
 ## 📋 Checklist de Pruebas Completas
 
@@ -396,6 +541,14 @@ Postman permite capturar valores de respuestas y usarlos en solicitudes posterio
 - [ ] Creación de usuarios funciona correctamente
 - [ ] Creación de pedidos funciona correctamente
 - [ ] Se pueden procesar pagos con Webpay
+
+### ✅ Pruebas de Autenticación con Firebase
+- [ ] Firebase está correctamente configurado (endpoint /auth/status)
+- [ ] Registro de nuevos usuarios funciona
+- [ ] Verificación de token funciona correctamente
+- [ ] Se puede obtener información del usuario autenticado
+- [ ] Los endpoints protegidos requieren token válido
+- [ ] Los errores de autenticación son manejados correctamente
 
 ### ✅ Pruebas CRUD
 - [ ] Crear (POST) funciona para todas las entidades

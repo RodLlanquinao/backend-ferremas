@@ -1,10 +1,279 @@
 {
   "info": {
     "name": "FERREMAS Backend API",
-    "description": "Colección de endpoints para el backend de FERREMAS - Incluye flujo completo de pedidos y pagos con Webpay\nFlujo típico de un pedido:\n1. POST /pedidos → Crear pedido (estado: pendiente)\n2. POST /api/webpay/crear-transaccion → Iniciar pago (estado: en_proceso)\n3. POST /api/webpay/retorno → Confirmar pago (estado: pagado/rechazado)",
+    "description": "Colección de endpoints para el backend de FERREMAS - Incluye flujo completo de pedidos y pagos con Webpay, y autenticación con Firebase\nFlujo típico de un pedido:\n1. POST /auth/login → Iniciar sesión con Firebase\n2. POST /pedidos → Crear pedido (estado: pendiente)\n3. POST /api/webpay/crear-transaccion → Iniciar pago (estado: en_proceso)\n4. POST /api/webpay/retorno → Confirmar pago (estado: pagado/rechazado)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints de autenticación con Firebase - Incluye registro, login, verificación de token y obtención de datos del usuario autenticado",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_user_email}}\",\n  \"password\": \"{{test_user_password}}\",\n  \"nombre\": \"Usuario Test\",\n  \"rol\": \"cliente\"\n}",
+              "description": "Datos para registrar un nuevo usuario en Firebase y BD local"
+            },
+            "description": "Registra un nuevo usuario usando Firebase Authentication y crea el registro correspondiente en la base de datos local"
+          },
+          "response": [
+            {
+              "name": "Registro exitoso",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/register",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"nombre\": \"Usuario Test\",\n  \"rol\": \"cliente\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 9,\n    \"nombre\": \"Usuario Test\",\n    \"email\": \"test@example.com\",\n    \"rol\": \"cliente\",\n    \"uid\": \"f1r3b4s3u1d123456789\"\n  },\n  \"message\": \"Usuario registrado exitosamente\"\n}"
+            },
+            {
+              "name": "Email ya registrado",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/register",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"nombre\": \"Usuario Test\",\n  \"rol\": \"cliente\"\n}"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Ya existe un usuario con ese email\",\n  \"status\": 409\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_user_email}}\",\n  \"password\": \"{{test_user_password}}\"\n}",
+              "description": "Credenciales para iniciar sesión"
+            },
+            "description": "Inicia sesión de usuario. NOTA: Este endpoint es principalmente informativo - El inicio de sesión real con Firebase debe realizarse en el cliente, que luego enviará el token al backend para verificación."
+          },
+          "response": [
+            {
+              "name": "Login exitoso",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"message\": \"Usa Firebase Authentication en el cliente para iniciar sesión\",\n    \"email\": \"test@example.com\"\n  },\n  \"message\": \"Información de login enviada\"\n}"
+            },
+            {
+              "name": "Credenciales inválidas",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"noexiste@example.com\",\n  \"password\": \"password123\"\n}"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Credenciales inválidas\",\n  \"status\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/verify-token",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"{{firebase_id_token}}\"\n}",
+              "description": "Token de ID de Firebase a verificar"
+            },
+            "description": "Verifica un token de ID de Firebase y devuelve la información del usuario. Este endpoint debe utilizarse después de autenticar en el cliente para obtener la sesión en el backend."
+          },
+          "response": [
+            {
+              "name": "Token válido",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/verify-token",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE...truncated...\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user\": {\n      \"id\": 9,\n      \"uid\": \"f1r3b4s3u1d123456789\",\n      \"email\": \"test@example.com\",\n      \"nombre\": \"Usuario Test\",\n      \"rol\": \"cliente\",\n      \"emailVerified\": true\n    }\n  },\n  \"message\": \"Token verificado correctamente\"\n}"
+            },
+            {
+              "name": "Token inválido",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/verify-token",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"invalid_token_here\"\n}"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Token inválido o expirado\",\n  \"status\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get User Info",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/me",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene la información del usuario autenticado actualmente"
+          },
+          "response": [
+            {
+              "name": "Autenticado correctamente",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/auth/me",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE...truncated..."
+                  }
+                ]
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 9,\n    \"uid\": \"f1r3b4s3u1d123456789\",\n    \"email\": \"test@example.com\",\n    \"nombre\": \"Usuario Test\",\n    \"rol\": \"cliente\",\n    \"emailVerified\": true\n  },\n  \"message\": \"Información del usuario obtenida exitosamente\"\n}"
+            },
+            {
+              "name": "No autenticado",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/auth/me"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Se requiere token de autenticación\",\n  \"status\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Firebase Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/status",
+            "description": "Verifica el estado de la configuración de Firebase en el servidor"
+          },
+          "response": [
+            {
+              "name": "Estado correcto",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/auth/status"
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"status\": \"Firebase Admin SDK inicializado correctamente\",\n    \"initialized\": true,\n    \"projectId\": \"ferremas-v2\",\n    \"environment\": \"development\",\n    \"auth\": {\n      \"status\": \"Funcional\"\n    },\n    \"database\": {\n      \"configured\": true,\n      \"status\": \"Conectado\"\n    },\n    \"config\": {\n      \"hasProjectId\": true,\n      \"hasClientEmail\": true,\n      \"hasPrivateKey\": true,\n      \"hasDatabaseUrl\": true\n    }\n  },\n  \"message\": \"Estado de Firebase obtenido exitosamente\"\n}"
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Health Check",
       "item": [
@@ -109,7 +378,13 @@
           "request": {
             "method": "GET",
             "url": "{{base_url}}/usuarios/{{test_user_id}}",
-            "description": "Obtiene los datos de un usuario específico"
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene los datos de un usuario específico (requiere autenticación con Firebase)"
           }
         },
         {
@@ -121,6 +396,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
@@ -140,6 +419,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
@@ -155,7 +438,13 @@
           "request": {
             "method": "DELETE",
             "url": "{{base_url}}/usuarios/{{test_user_id}}",
-            "description": "Elimina un usuario del sistema"
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Elimina un usuario del sistema (requiere autenticación con Firebase)"
           }
         }
       ]
@@ -169,7 +458,13 @@
           "request": {
             "method": "GET",
             "url": "{{base_url}}/pedidos/{{pedido_id}}",
-            "description": "Obtiene los detalles completos de un pedido específico, incluyendo información del producto, usuario y estado de pago"
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene los detalles completos de un pedido específico, incluyendo información del producto, usuario y estado de pago (requiere autenticación con Firebase)"
           },
           "response": [
             {
@@ -189,7 +484,13 @@
           "request": {
             "method": "GET",
             "url": "{{base_url}}/pedidos/usuario/{{test_user_id}}",
-            "description": "Obtiene todos los pedidos de un usuario específico"
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene todos los pedidos de un usuario específico (requiere autenticación con Firebase)"
           },
           "response": [
             {
@@ -209,6 +510,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
@@ -250,6 +555,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
@@ -265,7 +574,13 @@
           "request": {
             "method": "DELETE",
             "url": "{{base_url}}/pedidos/{{pedido_id}}",
-            "description": "Elimina un pedido del sistema"
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Elimina un pedido del sistema (requiere autenticación con Firebase)"
           }
         }
       ]
@@ -465,6 +780,21 @@
       "key": "transbank_token",
       "value": "01ab2cd3",
       "description": "Token de ejemplo de Webpay"
+    },
+    {
+      "key": "firebase_id_token",
+      "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE...reemplazar_por_token_real...",
+      "description": "Token de ID de Firebase para autenticación (obtener en cliente con signInWithEmailAndPassword)"
+    },
+    {
+      "key": "test_user_email",
+      "value": "test@example.com",
+      "description": "Email de usuario de prueba para autenticación con Firebase"
+    },
+    {
+      "key": "test_user_password",
+      "value": "password123",
+      "description": "Contraseña de usuario de prueba para autenticación con Firebase"
     }
   ]
 }
