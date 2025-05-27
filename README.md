@@ -1,22 +1,33 @@
-# FERREMAS Backend API v1.4 con Integración Transbank
+# FERREMAS Backend API v2.0
+## Instituto Profesional DuocUC - Escuela de Informática
+
+![DuocUC](https://img.shields.io/badge/DuocUC-Integración%20de%20Plataformas-orange)
+![Evaluación](https://img.shields.io/badge/Evaluación-EV3-blue)
+
+### Equipo de Desarrollo
+- **Felipe López**
+- **Rodrigo Llanquinao** 
+- **Alex Cayuqueo** 
 
 ![Node.js](https://img.shields.io/badge/Node.js-v16.13.1-green)
 ![Express.js](https://img.shields.io/badge/Express.js-v4.17.1-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v14.1-orange)
+![Firebase](https://img.shields.io/badge/Firebase-Authentication-yellow)
 ![CORS](https://img.shields.io/badge/CORS-enabled-yellow)
 ![SSL](https://img.shields.io/badge/SSL-enabled-purple)
 ![Transbank](https://img.shields.io/badge/Transbank-integrated-red)
 ![Webpay](https://img.shields.io/badge/Webpay%20Plus-v6.0.0-brightgreen)
 
-# 🎯 Estado del Proyecto: LISTO PARA EVALUACIÓN EV2
+# 🎯 Estado del Proyecto: LISTO PARA EVALUACIÓN EV3
 
 Este proyecto está completamente preparado para su evaluación académica. Incluye:
 
 - ✅ Sistema de pedidos completamente funcional
+- ✅ Autenticación con Firebase implementada
 - ✅ Integración con Webpay implementada y probada
-- ✅ Colección de Postman actualizada
+- ✅ Colección de Postman actualizada con pruebas de Firebase
 - ✅ Variables de entorno incluidas (ambiente académico controlado)
-- ✅ Documentación completa
+- ✅ Documentación completa y actualizada
 
 ## ℹ️ Nota Importante
 
@@ -27,11 +38,11 @@ Este proyecto está configurado específicamente para una evaluación académica
 - La configuración está optimizada para desarrollo local
 - El acceso está limitado al equipo evaluador
 
-Esta configuración no sigue las prácticas de seguridad estándar para un ambiente de producción, ya que su propósito es académico y de evaluación.
+Esta configuración no sigue las prácticas de seguridad estándar para un ambiente de producción, ya que su propósito es académico y de evaluación dentro del contexto del Instituto Profesional DuocUC.
 
 ## 🗺️ Descripción del Proyecto
 
-FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería con procesamiento de pagos integrado. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos, mensajes de contacto y procesamiento de pagos con Webpay de Transbank, utilizando PostgreSQL como base de datos.
+FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería con autenticación y procesamiento de pagos integrado. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos, mensajes de contacto, autenticación con Firebase y procesamiento de pagos con Webpay de Transbank, utilizando PostgreSQL como base de datos.
 
 ### URL de Desarrollo
 ```
@@ -41,14 +52,15 @@ http://localhost:8000
 
 ## Características Principales
 
+- ✅ **Autenticación con Firebase**: Sistema completo de registro, inicio de sesión y verificación de tokens
 - ✅ **Gestión de Productos**: CRUD completo para productos con categorías
-- ✅ **Gestión de Usuarios**: Administración de usuarios con roles
-- ✅ **Sistema de Pedidos**: Creación y gestión de pedidos
+- ✅ **Gestión de Usuarios**: Administración de usuarios con roles e integración con Firebase
+- ✅ **Sistema de Pedidos**: Creación y gestión de pedidos con autenticación
 - ✅ **Formulario de Contacto**: Recepción y almacenamiento de mensajes
 - ✅ **Procesamiento de Pagos**: Integración completa con Webpay Plus de Transbank
 - ✅ **Base de Datos PostgreSQL**: Conexión segura con SSL
 - ✅ **Arquitectura MVC**: Separación clara de responsabilidades
-- ✅ **Scripts de Prueba**: Herramientas multiplataforma para probar pagos
+- ✅ **Scripts de Prueba**: Herramientas multiplataforma para probar pagos y autenticación
 
 ## 📁 Estructura del Proyecto
 
@@ -56,21 +68,24 @@ http://localhost:8000
 backend-ferremas/
 ├── config/
 │   ├── database.js          # Configuración de PostgreSQL DB
-│   └── environment.js       # Variables de entorno
+│   ├── environment.js       # Variables de entorno
+│   └── firebase.js          # Configuración de Firebase Authentication
 ├── controllers/
 │   ├── productosController.js
 │   ├── usuariosController.js
 │   ├── pedidosController.js
 │   └── contactoController.js
 ├── middleware/
+│   ├── authMiddleware.js    # Middleware de autenticación con Firebase
 │   ├── errorHandler.js      # Manejo de errores
 │   └── validation.js        # Validaciones
 ├── models/
 │   ├── Producto.js
-│   ├── Usuario.js
+│   ├── Usuario.js           # Actualizado con soporte para Firebase
 │   ├── Pedido.js
 │   └── Contacto.js
 ├── routes/
+│   ├── auth.routes.js       # Rutas de autenticación con Firebase
 │   ├── productos.routes.js
 │   ├── usuarios.routes.js
 │   ├── pedidos.routes.js
@@ -79,12 +94,15 @@ backend-ferremas/
 ├── utils/
 │   └── responseHelper.js    # Helpers para respuestas
 ├── scripts/
-│   └── test-db.js           # Pruebas de conexión a BD
+│   ├── test-db.js           # Pruebas de conexión a BD
+│   └── migrate.js           # Script para ejecutar migraciones
+├── migrations/
+│   └── 01_add_firebase_auth_columns.sql # Migración para Firebase
 ├── webpay-test.js           # Script multiplataforma para pruebas de pago
 ├── webpay-test.sh           # Script bash para pruebas de pago
 ├── docs/
 │   ├── API.md               # Documentación de la API
-│   └── POSTMAN_GUIDE.md     # Guía de Postman
+│   └── POSTMAN_GUIDE.md     # Guía de Postman actualizada con Firebase
 └── package.json
 ```
 
@@ -102,7 +120,7 @@ backend-ferremas/
    ```
 
 3. **Variables de entorno**
-   El archivo `.env` ya está incluido en el proyecto con todas las configuraciones necesarias para el ambiente de evaluación académica.
+   El archivo `.env` ya está incluido en el proyecto con todas las configuraciones necesarias para el ambiente de evaluación académica, incluyendo las configuraciones de Firebase Authentication y Transbank.
 
 4. **Iniciar el servidor**
    ```bash
@@ -115,7 +133,8 @@ El servidor estará disponible en http://localhost:8000
 
 - Node.js (v14 o superior)
 - PostgreSQL
-- npm o yarn
+- npm, yarn o pnpm
+- Proyecto Firebase (configuración incluida en .env)
 
 ## 🗄️ Base de Datos
 
@@ -145,6 +164,7 @@ La tabla `pedidos` ahora incluye los siguientes campos adicionales:
 ### Estado del Servidor
 - `GET /` - Información básica
 - `GET /health` - Estado de salud y DB
+- `GET /auth/status` - Estado de configuración de Firebase
 
 ### Productos
 - `GET /productos` - Obtener todos los productos
@@ -154,18 +174,25 @@ La tabla `pedidos` ahora incluye los siguientes campos adicionales:
 - `PUT /productos/:id` - Actualizar producto
 - `DELETE /productos/:id` - Eliminar producto
 
+### Autenticación
+- `POST /auth/register` - Registrar nuevo usuario con Firebase
+- `POST /auth/login` - Iniciar sesión de usuario (información para cliente)
+- `POST /auth/verify-token` - Verificar token de Firebase
+- `GET /auth/me` - Obtener información del usuario autenticado
+- `GET /auth/status` - Verificar estado de configuración de Firebase
+
 ### Usuarios
-- `GET /usuarios/:id` - Obtener usuario por ID
-- `POST /usuarios` - Crear nuevo usuario
-- `PUT /usuarios/:id` - Actualizar usuario
-- `DELETE /usuarios/:id` - Eliminar usuario
+- `GET /usuarios/:id` - Obtener usuario por ID (requiere autenticación)
+- `POST /usuarios` - Crear nuevo usuario (requiere autenticación)
+- `PUT /usuarios/:id` - Actualizar usuario (requiere autenticación)
+- `DELETE /usuarios/:id` - Eliminar usuario (requiere autenticación)
 
 ### Pedidos
-- `GET /pedidos/:id` - Obtener pedido por ID
-- `GET /pedidos/usuario/:usuarioId` - Por usuario
-- `POST /pedidos` - Crear nuevo pedido
-- `PUT /pedidos/:id` - Actualizar pedido
-- `DELETE /pedidos/:id` - Eliminar pedido
+- `GET /pedidos/:id` - Obtener pedido por ID (requiere autenticación)
+- `GET /pedidos/usuario/:usuarioId` - Por usuario (requiere autenticación)
+- `POST /pedidos` - Crear nuevo pedido (requiere autenticación)
+- `PUT /pedidos/:id` - Actualizar pedido (requiere autenticación)
+- `DELETE /pedidos/:id` - Eliminar pedido (requiere autenticación)
 
 ### Contacto
 - `GET /contacto` - Obtener todos
@@ -278,6 +305,13 @@ La colección utiliza las siguientes variables que puedes configurar en tu entor
 
 ### Grupos de Endpoints en la Colección
 
+#### Authentication
+- **POST** `/auth/register`: Registrar nuevo usuario con Firebase
+- **POST** `/auth/login`: Iniciar sesión (información para cliente)
+- **POST** `/auth/verify-token`: Verificar token de Firebase
+- **GET** `/auth/me`: Obtener información del usuario autenticado
+- **GET** `/auth/status`: Verificar estado de configuración de Firebase
+
 #### Health Check
 - **GET** `/`: Endpoint base
 - **GET** `/health`: Verificar estado del servidor y BD
@@ -374,6 +408,8 @@ La colección utiliza las siguientes variables que puedes configurar en tu entor
 
 ## 🔒 Seguridad
 
+- ✅ **Firebase Authentication**: Autenticación segura con Firebase
+- ✅ **JWT Tokens**: Verificación de tokens para rutas protegidas
 - ✅ **CORS**: Configurado para desarrollo y producción
 - ✅ **Validación**: Validación de entrada en todos los endpoints
 - ✅ **SSL**: Conexión segura a la base de datos
@@ -472,6 +508,7 @@ node index.js
 - **Express.js**: Framework web
 - **PostgreSQL**: Base de datos relacional
 - **pg**: Cliente PostgreSQL para Node.js
+- **Firebase Admin SDK**: Biblioteca oficial para autenticación con Firebase
 - **Transbank SDK**: Biblioteca oficial para integración con Webpay
 - **WebpayPlus**: Servicio de pago de Transbank
 
@@ -513,7 +550,7 @@ node index.js
 ## 📚 Documentación Adicional
 
 - [Documentación de la API](docs/API.md)
-- [Guía de Postman](docs/POSTMAN_GUIDE.md)
+- [Guía de Postman](docs/POSTMAN_GUIDE.md) - Incluye instrucciones para pruebas de Firebase
 
 ## 🆘 Soporte
 
@@ -527,9 +564,12 @@ Para soporte técnico:
 
 **Nota sobre Variables de Entorno**: ⚠️ Las variables de entorno están incluidas intencionalmente en el repositorio ya que este es un ambiente académico controlado y las credenciales son de prueba (Webpay Integration).
 
-**Estado**: ✅ Listo para evaluación académica
+**Estado**: ✅ Listo para evaluación académica EV3
+**Institución**: Instituto Profesional DuocUC - Escuela de Informática
+**Equipo**: Felipe López, Rodrigo Llanquinao, Alex Cayuqueo
 **Base de Datos**: ✅ Configurada para entorno local
-**Última actualización**: 25 de mayo de 2025
+**Última actualización**: 26 de mayo de 2025
 **Pruebas Completas**: ✅ Todos los endpoints verificados y funcionales
+**Firebase Authentication**: ✅ Sistema de autenticación implementado y probado
 **Integración Transbank**: ✅ Funcionando en ambiente de integración
 **Pagos con Webpay**: ✅ Flujo completo implementado y probado

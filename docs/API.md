@@ -1,41 +1,269 @@
 # FERREMAS Backend API v2 - Documentación
 
-Esta documentación proporciona detalles completos sobre todos los endpoints disponibles en la API de FERREMAS Backend, incluyendo la nueva integración con Transbank para procesamiento de pagos.
+Esta documentación proporciona detalles completos sobre todos los endpoints disponibles en la API de FERREMAS Backend, incluyendo la autenticación con Firebase y la integración con Transbank para procesamiento de pagos.
 
 **Versión:** 2.0.0  
 **Base URL:** `http://localhost:8000`  
-**Última actualización:** 25 de mayo de 2025
+**Última actualización:** 26 de mayo de 2025
 
 ## Índice de Contenidos
 
 1. [Introducción](#introducción)
 2. [Autenticación](#autenticación)
-3. [Convenciones de la API](#convenciones-de-la-api)
-4. [Códigos de Estado](#códigos-de-estado)
-5. [Health Check](#health-check)
-6. [Productos](#productos)
-7. [Usuarios](#usuarios)
-8. [Pedidos](#pedidos)
-9. [Contacto](#contacto)
-10. [Procesamiento de Pagos (Transbank)](#procesamiento-de-pagos-transbank)
-11. [Manejo de Errores](#manejo-de-errores)
-12. [Ejemplos Completos](#ejemplos-completos)
+3. [Firebase Authentication](#firebase-authentication)
+4. [Convenciones de la API](#convenciones-de-la-api)
+5. [Códigos de Estado](#códigos-de-estado)
+6. [Health Check](#health-check)
+7. [Productos](#productos)
+8. [Usuarios](#usuarios)
+9. [Pedidos](#pedidos)
+10. [Contacto](#contacto)
+11. [Procesamiento de Pagos (Transbank)](#procesamiento-de-pagos-transbank)
+12. [Manejo de Errores](#manejo-de-errores)
+13. [Ejemplos Completos](#ejemplos-completos)
 
 ## Introducción
 
-La API de FERREMAS proporciona endpoints para gestionar productos, usuarios, pedidos, mensajes de contacto y procesamiento de pagos. Esta API está construida con Node.js, Express.js y utiliza PostgreSQL como base de datos.
+La API de FERREMAS proporciona endpoints para gestionar productos, usuarios, pedidos, mensajes de contacto, autenticación de usuarios y procesamiento de pagos. Esta API está construida con Node.js, Express.js y utiliza PostgreSQL como base de datos.
 
 ### Tecnologías Utilizadas
 
 - **Node.js**: Runtime de JavaScript
 - **Express.js**: Framework web
 - **PostgreSQL**: Base de datos relacional
+- **Firebase Admin SDK**: Para autenticación de usuarios
 - **Transbank SDK**: Para integración de pagos
 - **WebpayPlus**: Servicio de pago de Transbank
 
 ## Autenticación
 
-La API actualmente no requiere autenticación para acceder a los endpoints. Sin embargo, se recomienda implementar un sistema de autenticación basado en tokens JWT para entornos de producción.
+La API utiliza Firebase Authentication para gestionar la autenticación de usuarios. Todos los endpoints protegidos requieren un token de ID de Firebase válido que debe enviarse en el encabezado de autorización de la solicitud.
+
+### Headers de Autenticación
+
+Para acceder a los endpoints protegidos, debes incluir el siguiente encabezado HTTP:
+
+```
+Authorization: Bearer {firebase_id_token}
+```
+
+Donde `{firebase_id_token}` es un token de ID válido generado por Firebase Authentication.
+
+### Obtención del Token
+
+El proceso típico para obtener un token válido es:
+
+1. Registrar un usuario con `/auth/register` (o usar un usuario existente)
+2. Iniciar sesión en Firebase desde el cliente
+3. Obtener el token de ID de Firebase
+4. Verificar el token con `/auth/verify-token`
+5. Usar el token en las solicitudes subsiguientes
+
+### Endpoints Protegidos
+
+Los siguientes grupos de endpoints requieren autenticación:
+
+- **Usuarios** - Todos los endpoints de usuario requieren autenticación
+- **Pedidos** - Todos los endpoints de pedido requieren autenticación
+- **Auth** - Los endpoints `/auth/me` requieren autenticación
+
+### Roles de Usuario
+
+La API admite diferentes roles de usuario:
+
+- **cliente** - Acceso básico a sus propios datos y creación de pedidos
+- **admin** - Acceso completo a todos los recursos
+
+## Firebase Authentication
+
+La API integra Firebase Authentication para proporcionar un sistema seguro de autenticación de usuarios. Los siguientes endpoints están disponibles para gestionar la autenticación:
+
+### POST /auth/register
+
+Registra un nuevo usuario utilizando Firebase Authentication y crea el registro correspondiente en la base de datos local.
+
+**Cuerpo de la Solicitud (JSON)**
+
+```json
+{
+  "email": "usuario@example.com",
+  "password": "contraseña123",
+  "nombre": "Nombre Usuario",
+  "rol": "cliente"
+}
+```
+
+**Respuesta Exitosa (201 Created)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 9,
+    "nombre": "Nombre Usuario",
+    "email": "usuario@example.com",
+    "rol": "cliente",
+    "uid": "f1r3b4s3u1d123456789"
+  },
+  "message": "Usuario registrado exitosamente"
+}
+```
+
+**Respuesta de Error (409 Conflict)**
+
+```json
+{
+  "success": false,
+  "error": "Ya existe un usuario con ese email",
+  "status": 409
+}
+```
+
+### POST /auth/login
+
+Proporciona información para iniciar sesión de usuario. Este endpoint es principalmente informativo - el inicio de sesión real con Firebase debe realizarse en el cliente, que luego enviará el token al backend para verificación.
+
+**Cuerpo de la Solicitud (JSON)**
+
+```json
+{
+  "email": "usuario@example.com",
+  "password": "contraseña123"
+}
+```
+
+**Respuesta Exitosa (200 OK)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Usa Firebase Authentication en el cliente para iniciar sesión",
+    "email": "usuario@example.com"
+  },
+  "message": "Información de login enviada"
+}
+```
+
+**Respuesta de Error (401 Unauthorized)**
+
+```json
+{
+  "success": false,
+  "error": "Credenciales inválidas",
+  "status": 401
+}
+```
+
+### POST /auth/verify-token
+
+Verifica un token de ID de Firebase y devuelve la información del usuario. Este endpoint debe utilizarse después de autenticar en el cliente para obtener la sesión en el backend.
+
+**Cuerpo de la Solicitud (JSON)**
+
+```json
+{
+  "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE..."
+}
+```
+
+**Respuesta Exitosa (200 OK)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 9,
+      "uid": "f1r3b4s3u1d123456789",
+      "email": "usuario@example.com",
+      "nombre": "Nombre Usuario",
+      "rol": "cliente",
+      "emailVerified": true
+    }
+  },
+  "message": "Token verificado correctamente"
+}
+```
+
+**Respuesta de Error (401 Unauthorized)**
+
+```json
+{
+  "success": false,
+  "error": "Token inválido o expirado",
+  "status": 401
+}
+```
+
+### GET /auth/me
+
+Obtiene la información del usuario autenticado actualmente. Requiere un token de autenticación válido.
+
+**Headers**
+
+```
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE...
+```
+
+**Respuesta Exitosa (200 OK)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 9,
+    "uid": "f1r3b4s3u1d123456789",
+    "email": "usuario@example.com",
+    "nombre": "Nombre Usuario",
+    "rol": "cliente",
+    "emailVerified": true
+  },
+  "message": "Información del usuario obtenida exitosamente"
+}
+```
+
+**Respuesta de Error (401 Unauthorized)**
+
+```json
+{
+  "success": false,
+  "error": "Se requiere token de autenticación",
+  "status": 401
+}
+```
+
+### GET /auth/status
+
+Verifica el estado de la configuración de Firebase en el servidor.
+
+**Respuesta Exitosa (200 OK)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "Firebase Admin SDK inicializado correctamente",
+    "initialized": true,
+    "projectId": "ferremas-v2",
+    "environment": "development",
+    "auth": {
+      "status": "Funcional"
+    },
+    "database": {
+      "configured": true,
+      "status": "Conectado"
+    },
+    "config": {
+      "hasProjectId": true,
+      "hasClientEmail": true,
+      "hasPrivateKey": true,
+      "hasDatabaseUrl": true
+    }
+  },
+  "message": "Estado de Firebase obtenido exitosamente"
+}
+```
 
 ## Convenciones de la API
 
@@ -71,6 +299,8 @@ La API utiliza los siguientes códigos de estado HTTP:
 - `400 Bad Request`: La solicitud contiene datos inválidos
 - `404 Not Found`: El recurso solicitado no existe
 - `422 Unprocessable Entity`: Los datos de la solicitud son válidos pero no se pueden procesar
+- `401 Unauthorized`: No autenticado o token inválido
+- `403 Forbidden`: No autorizado para el recurso solicitado
 - `500 Internal Server Error`: Error interno del servidor
 
 ## Health Check
@@ -356,6 +586,12 @@ Obtiene los datos de un usuario específico.
 |--------|---------|-------------------|
 | `id`   | integer | ID del usuario     |
 
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
+
 **Respuesta Exitosa (200 OK)**
 
 ```json
@@ -379,6 +615,12 @@ Obtiene los datos de un usuario específico.
 ### POST /usuarios
 
 Crea un nuevo usuario en el sistema.
+
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
 
 **Cuerpo de la Solicitud (JSON)**
 
@@ -421,6 +663,12 @@ Actualiza los datos de un usuario existente.
 |--------|---------|-------------------|
 | `id`   | integer | ID del usuario     |
 
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
+
 **Cuerpo de la Solicitud (JSON)**
 
 ```json
@@ -461,6 +709,12 @@ Elimina un usuario del sistema.
 |--------|---------|-------------------|
 | `id`   | integer | ID del usuario     |
 
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
+
 **Respuesta Exitosa (200 OK)**
 
 ```json
@@ -482,6 +736,12 @@ Obtiene los detalles de un pedido específico.
 | Nombre | Tipo    | Descripción        |
 |--------|---------|-------------------|
 | `id`   | integer | ID del pedido      |
+
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
 
 **Respuesta Exitosa (200 OK)**
 
@@ -518,6 +778,12 @@ Obtiene todos los pedidos de un usuario específico.
 | Nombre      | Tipo    | Descripción         |
 |-------------|---------|---------------------|
 | `usuarioId` | integer | ID del usuario      |
+
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
 
 **Respuesta Exitosa (200 OK)**
 
@@ -567,6 +833,12 @@ Obtiene todos los pedidos de un usuario específico.
 
 Crea un nuevo pedido en el sistema.
 
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
+
 **Cuerpo de la Solicitud (JSON)**
 
 ```json
@@ -612,6 +884,12 @@ Actualiza el estado u otros datos de un pedido existente.
 |--------|---------|-------------------|
 | `id`   | integer | ID del pedido      |
 
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
+
 **Cuerpo de la Solicitud (JSON)**
 
 ```json
@@ -653,6 +931,12 @@ Elimina un pedido del sistema.
 | Nombre | Tipo    | Descripción        |
 |--------|---------|-------------------|
 | `id`   | integer | ID del pedido      |
+
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
 
 **Respuesta Exitosa (200 OK)**
 
@@ -865,9 +1149,24 @@ Retorna un documento HTML con confirmación final del proceso de pago:
 | Código HTTP | Descripción                                           |
 |-------------|------------------------------------------------------|
 | 400         | Datos de entrada inválidos o incompletos             |
+| 401         | No autenticado o token inválido                      |
+| 403         | No autorizado para acceder al recurso                |
 | 404         | Recurso no encontrado                                |
+| 409         | Conflicto (ej. email ya registrado)                  |
 | 422         | Datos válidos pero no procesables (ej. stock insuficiente) |
 | 500         | Error interno del servidor                           |
+
+### Errores Específicos de Autenticación
+
+| Código | Descripción                                      |
+|--------|--------------------------------------------------|
+| AUTH001| Credenciales inválidas                           |
+| AUTH002| Token expirado                                   |
+| AUTH003| Token inválido o malformado                      |
+| AUTH004| Usuario no encontrado                            |
+| AUTH005| Email ya registrado                              |
+| AUTH006| Permisos insuficientes para esta operación       |
+| AUTH007| Firebase no inicializado correctamente           |
 
 ### Errores Específicos de Transbank
 
@@ -880,12 +1179,34 @@ Retorna un documento HTML con confirmación final del proceso de pago:
 
 ## Ejemplos Completos
 
-### Flujo Completo de Pedido y Pago
+### Flujo Completo de Autenticación y Pedido
 
-1. Crear un nuevo pedido:
+1. Registrar un usuario (o usar uno existente):
+
+```json
+// POST /auth/register
+{
+  "email": "usuario@example.com",
+  "password": "contraseña123",
+  "nombre": "Nombre Usuario",
+  "rol": "cliente"
+}
+```
+
+2. Verificar el token de Firebase obtenido en el cliente:
+
+```json
+// POST /auth/verify-token
+{
+  "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE..."
+}
+```
+
+3. Crear un nuevo pedido (con token de autenticación):
 
 ```json
 // POST /pedidos
+// Headers: Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE...
 {
   "producto_id": 34,
   "usuario_id": 9,

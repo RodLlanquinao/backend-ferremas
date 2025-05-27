@@ -19,6 +19,7 @@ const cors = require("cors")
 // Importar configuraciones
 const { PORT, NODE_ENV, CORS_ORIGIN, MAX_REQUEST_SIZE } = require("./config/environment")
 const { testConnection } = require("./config/database")
+const { initializeFirebaseAdmin } = require("./config/firebase")
 
 // Importar middleware
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler")
@@ -29,6 +30,7 @@ const usuariosRoutes = require("./routes/usuarios.routes")
 const pedidosRoutes = require("./routes/pedidos.routes")
 const contactoRoutes = require("./routes/contacto.routes")
 const webpayRoutes = require("./routes/webpay.routes")
+const authRoutes = require("./routes/auth.routes")
 
 // Crear aplicación Express
 const app = express()
@@ -108,6 +110,7 @@ app.use("/usuarios", usuariosRoutes)
 app.use("/pedidos", pedidosRoutes)
 app.use("/contacto", contactoRoutes)
 app.use("/api/webpay", webpayRoutes)
+app.use("/auth", authRoutes)
 
 /**
  * Middleware de manejo de errores
@@ -131,6 +134,17 @@ const startServer = async () => {
       console.error("❌ No se pudo conectar a la base de datos")
       process.exit(1)
     }
+    
+    // Inicializar Firebase Admin SDK
+    try {
+      console.log("🔄 Inicializando Firebase Admin SDK...")
+      initializeFirebaseAdmin()
+      console.log("✅ Firebase Admin SDK inicializado correctamente")
+    } catch (error) {
+      console.warn("⚠️ Error al inicializar Firebase Admin SDK:", error.message)
+      console.warn("⚠️ La autenticación con Firebase podría no funcionar correctamente")
+      // No detenemos el servidor, pero advertimos del problema
+    }
 
     // Iniciar servidor
     app.listen(PORT, () => {
@@ -139,6 +153,7 @@ const startServer = async () => {
       console.log(`🚀 Puerto: ${PORT}`)
       console.log(`🚀 Entorno: ${NODE_ENV}`)
       console.log(`🚀 URL: http://localhost:${PORT}`)
+      console.log(`🔐 Autenticación: Firebase Authentication`)
       console.log("🚀 ================================")
     })
   } catch (error) {
