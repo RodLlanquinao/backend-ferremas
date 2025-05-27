@@ -2,12 +2,13 @@
 ## Instituto Profesional DuocUC - Escuela de Informática
 
 ![DuocUC](https://img.shields.io/badge/DuocUC-Integración%20de%20Plataformas-orange)
-![Evaluación](https://img.shields.io/badge/Evaluación-EV3-blue)
+![Evaluación](https://img.shields.io/badge/Evaluación-EV2-orange)
 
 ### Equipo de Desarrollo
 - **Felipe López**
 - **Rodrigo Llanquinao** 
 - **Alex Cayuqueo** 
+
 
 ![Node.js](https://img.shields.io/badge/Node.js-v16.13.1-green)
 ![Express.js](https://img.shields.io/badge/Express.js-v4.17.1-blue)
@@ -18,7 +19,7 @@
 ![Transbank](https://img.shields.io/badge/Transbank-integrated-red)
 ![Webpay](https://img.shields.io/badge/Webpay%20Plus-v6.0.0-brightgreen)
 
-# 🎯 Estado del Proyecto: LISTO PARA EVALUACIÓN EV3
+# 🎯 Estado del Proyecto: LISTO PARA EVALUACIÓN EV2
 
 Este proyecto está completamente preparado para su evaluación académica. Incluye:
 
