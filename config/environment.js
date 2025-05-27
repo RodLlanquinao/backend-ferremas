@@ -18,7 +18,7 @@
 
 module.exports = {
   // Configuración del servidor
-  PORT: process.env.PORT || 3000,
+  PORT: parseInt(process.env.PORT || 8000, 10),
   NODE_ENV: process.env.NODE_ENV || "integration", // Valor por defecto cambiado a integration para pruebas con Transbank
 
   // Configuración de la base de datos - Railway provee automáticamente DATABASE_URL
@@ -42,7 +42,7 @@ module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || "info",
   
   // Railway específico - URL de la aplicación (automáticamente proporcionada)
-  APP_URL: process.env.RAILWAY_STATIC_URL || `http://localhost:${process.env.PORT || 3000}`,
+  APP_URL: process.env.RAILWAY_STATIC_URL || `http://localhost:${process.env.PORT || 8000}`,
   
   // Railway específico - entorno de ejecución
   RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT || "integration", // Sincronizado con NODE_ENV por defecto

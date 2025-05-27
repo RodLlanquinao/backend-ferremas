@@ -6,6 +6,13 @@
  * @version 1.0.0
  */
 
+// Load environment variables from .env file first
+require('dotenv').config();
+console.log('Environment variables loaded:');
+console.log('- PORT:', process.env.PORT);
+console.log('- NODE_ENV:', process.env.NODE_ENV);
+console.log('- CORS_ORIGIN:', process.env.CORS_ORIGIN);
+
 const express = require("express")
 const cors = require("cors")
 

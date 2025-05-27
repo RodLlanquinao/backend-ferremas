@@ -35,7 +35,7 @@ FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gesti
 
 ### URL de Desarrollo
 ```
-http://localhost:3000
+http://localhost:8000
 ```
 ### Documentación de la API 🚀
 
@@ -109,7 +109,7 @@ backend-ferremas/
    node index.js
    ```
 
-El servidor estará disponible en http://localhost:3000
+El servidor estará disponible en http://localhost:8000
 
 ## Requisitos Previos
 

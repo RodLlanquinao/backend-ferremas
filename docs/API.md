@@ -3,7 +3,7 @@
 Esta documentación proporciona detalles completos sobre todos los endpoints disponibles en la API de FERREMAS Backend, incluyendo la nueva integración con Transbank para procesamiento de pagos.
 
 **Versión:** 2.0.0  
-**Base URL:** `http://localhost:3000`  
+**Base URL:** `http://localhost:8000`  
 **Última actualización:** 25 de mayo de 2025
 
 ## Índice de Contenidos
@@ -1115,7 +1115,7 @@ Content-Type: text/html; charset=utf-8
         <p class="loading">Redirigiendo en 3 segundos...</p>
         <script>
             setTimeout(function() {
-                window.location.href = 'http://localhost:3000/api/webpay/retorno';
+                window.location.href = 'http://localhost:8000/api/webpay/retorno';
             }, 3000);
         </script>
     </div>

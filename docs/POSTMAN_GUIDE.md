@@ -21,7 +21,7 @@ Esta guía proporciona instrucciones detalladas para utilizar la colección de P
 Para utilizar esta colección de Postman, necesitarás:
 
 1. **Postman**: Descargar e instalar la última versión desde [postman.com](https://www.postman.com/downloads/)
-2. **FERREMAS Backend**: El servidor debe estar en ejecución en `http://localhost:3000`
+2. **FERREMAS Backend**: El servidor debe estar en ejecución en `http://localhost:8000`
 3. **Base de datos**: PostgreSQL configurado y funcionando
 
 ## Importación de la Colección
@@ -52,7 +52,7 @@ Añade las siguientes variables al entorno:
 
 | Variable       | Valor Inicial   | Descripción                              |
 |----------------|-----------------|------------------------------------------|
-| `base_url`     | `http://localhost:3000` | URL base del servidor               |
+| `base_url`     | `http://localhost:8000` | URL base del servidor               |
 | `producto_id`  | `34`            | ID de un producto existente para pruebas |
 | `usuario_id`   | `9`             | ID de un usuario existente para pruebas  |
 | `pedido_id`    | `10`            | ID de un pedido para pruebas             |
