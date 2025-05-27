@@ -52,20 +52,38 @@ Para facilitar las pruebas, es recomendable crear un entorno con variables:
 
 Añade las siguientes variables al entorno:
 
-| Variable       | Valor Inicial   | Descripción                              |
-|----------------|-----------------|------------------------------------------|
-| `base_url`     | `http://localhost:8000` | URL base del servidor               |
-| `producto_id`  | `34`            | ID de un producto existente para pruebas |
-| `usuario_id`   | `9`             | ID de un usuario existente para pruebas  |
-| `pedido_id`    | `10`            | ID de un pedido para pruebas             |
-| `mensaje_id`   | `17`            | ID de un mensaje de contacto para pruebas|
-| `token_ws`     | _vacío_         | Se llenará automáticamente durante las pruebas de pago |
-| `firebase_id_token` | _vacío_     | Token de ID de Firebase para autenticación |
-| `test_user_email` | `test@example.com` | Email de usuario de prueba para Firebase |
-| `test_user_password` | `password123` | Contraseña de usuario de prueba para Firebase |
+|| Variable       | Valor Inicial   | Descripción                              |
+||----------------|-----------------|------------------------------------------|
+|| `base_url`     | `http://localhost:8000` | URL base del servidor               |
+|| `producto_id`  | `34`            | ID de un producto existente para pruebas |
+|| `usuario_id`   | `9`             | ID de un usuario existente para pruebas  |
+|| `pedido_id`    | `10`            | ID de un pedido para pruebas             |
+|| `mensaje_id`   | `17`            | ID de un mensaje de contacto para pruebas|
+|| `token_ws`     | _vacío_         | Se llenará automáticamente durante las pruebas de pago |
+|| `firebase_id_token` | _vacío_     | Token de ID de Firebase para autenticación |
+|| `test_user_email` | `test@example.com` | Email de usuario de prueba para Firebase |
+|| `test_user_password` | `password123` | Contraseña de usuario de prueba para Firebase |
 
 5. Haz clic en "Save" para guardar el entorno
 6. Selecciona "FERREMAS Local" en el desplegable de entornos en la esquina superior derecha de Postman
+
+### Configurar Autenticación Automática con Firebase
+
+Para simplificar las pruebas con endpoints que requieren autenticación, puedes importar la configuración automática:
+
+1. En Postman, haz clic en "Import" (Importar)
+2. Selecciona el archivo `postman_firebase_config.json` ubicado en la raíz del proyecto
+3. Una vez importado, abre la colección "FERREMAS Firebase Auth Configuration"
+4. Haz clic en los tres puntos (...) junto al nombre de la colección
+5. Selecciona "Edit" (Editar)
+6. Copia todo el contenido de la pestaña "Pre-request Script"
+7. Vuelve a la colección principal "FERREMAS Backend API"
+8. Edita esta colección y pega el script en su pestaña "Pre-request Script"
+9. Guarda los cambios
+
+Ahora, todas las solicitudes a endpoints protegidos obtendrán y renovarán automáticamente el token de Firebase cuando sea necesario.
+
+Para más detalles sobre la autenticación con Firebase, consulta el documento [POSTMAN_FIREBASE_AUTH.md](POSTMAN_FIREBASE_AUTH.md).
 
 ## Pruebas Básicas
 
@@ -428,6 +446,7 @@ Sigue los pasos anteriores usando la tarjeta de crédito aprobada.
 3. Comprueba que el token no haya expirado (duran 1 hora por defecto)
 4. Verifica el formato del encabezado: `Authorization: Bearer {{firebase_id_token}}`
 5. Obtén un nuevo token realizando el flujo de autenticación desde el principio
+6. Para pruebas rápidas, puedes generar un token de prueba ejecutando: `node scripts/generate-test-token.js`
 
 ### Error al crear un pedido
 

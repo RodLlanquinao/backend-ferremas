@@ -59,6 +59,11 @@ El proceso típico para obtener un token válido es:
 4. Verificar el token con `/auth/verify-token`
 5. Usar el token en las solicitudes subsiguientes
 
+Para pruebas sin frontend, puedes generar un token de prueba ejecutando:
+```bash
+node scripts/generate-test-token.js
+```
+
 ### Endpoints Protegidos
 
 Los siguientes grupos de endpoints requieren autenticación:
