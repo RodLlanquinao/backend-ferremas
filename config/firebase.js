@@ -23,10 +23,12 @@ const serviceAccountPath = path.join(__dirname, '../serviceAccountKey.json');
 let serviceAccount;
 if (fs.existsSync(serviceAccountPath)) {
   try {
-    serviceAccount = require(serviceAccountPath);
+    // Usar fs.readFileSync en lugar de require
+    serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
     console.log('✅ Archivo de credenciales de Firebase encontrado y cargado');
   } catch (error) {
     console.error('❌ Error al leer el archivo de credenciales de Firebase:', error);
+    throw error;
   }
 } else {
   console.log('⚠️ Archivo de credenciales no encontrado, se intentará crear uno');
@@ -71,29 +73,41 @@ function initializeFirebaseAdmin() {
     try {
       // Comprobar si tenemos las credenciales necesarias
       if (!serviceAccount) {
-        console.warn('⚠️ Credenciales de Firebase incompletas. Usando modo de desarrollo.');
-        
-        // Inicializar en modo de desarrollo con credenciales por defecto
-        firebaseAdmin = admin.initializeApp({
-          credential: admin.credential.applicationDefault()
-        });
-      } else {
-        // Inicializar con credenciales del archivo JSON
-        const firebaseConfig = {
-          credential: admin.credential.cert(serviceAccount)
-        };
-        
-        // Añadir URL de base de datos si está disponible
-        if (databaseURL) {
-          firebaseConfig.databaseURL = databaseURL;
-        }
-        
-        firebaseAdmin = admin.initializeApp(firebaseConfig);
+        throw new Error('Credenciales de Firebase no disponibles');
+      }
+
+      // Validar campos requeridos
+      if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
+        throw new Error('El archivo de credenciales no contiene todos los campos requeridos');
+      }
+
+      // Log información relevante para debugging (nunca loguear las credenciales completas)
+      console.log('🔄 Inicializando Firebase Admin con proyecto:', serviceAccount.project_id);
+      console.log('🔑 Usando client email:', serviceAccount.client_email);
+      console.log('📝 Private key present:', !!serviceAccount.private_key);
+      
+      // Inicializar con credenciales del archivo JSON
+      const firebaseConfig = {
+        credential: admin.credential.cert(serviceAccount)
+      };
+      
+      // Añadir URL de base de datos si está disponible
+      if (databaseURL) {
+        firebaseConfig.databaseURL = databaseURL;
+        console.log('🔗 Using database URL:', databaseURL);
       }
       
+      firebaseAdmin = admin.initializeApp(firebaseConfig);
       console.log('🔥 Firebase Admin SDK inicializado correctamente');
     } catch (error) {
       console.error('❌ Error al inicializar Firebase Admin SDK:', error);
+      // Log more details about the error
+      if (error.message.includes('invalid_grant')) {
+        console.error('⚠️ Error de credenciales - Posibles causas:');
+        console.error('1. El archivo de credenciales puede estar revocado');
+        console.error('2. La hora del servidor puede estar desincronizada');
+        console.error('3. El formato de la private_key puede estar incorrecto');
+      }
       throw error;
     }
   }

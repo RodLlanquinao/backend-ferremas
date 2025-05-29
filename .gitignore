@@ -80,6 +80,10 @@ lerna-debug.log
 *.pem
 *.key
 
+# Firebase credentials
+serviceAccountKey.json
+*serviceAccountKey*.json
+
 # Logs and debugging
 logs/
 *.log

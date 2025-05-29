@@ -9,7 +9,6 @@
 - **Rodrigo Llanquinao** 
 - **Alex Cayuqueo** 
 
-
 ![Node.js](https://img.shields.io/badge/Node.js-v16.13.1-green)
 ![Express.js](https://img.shields.io/badge/Express.js-v4.17.1-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v14.1-orange)
