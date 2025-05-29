@@ -8,6 +8,9 @@ const router = express.Router()
 const usuariosController = require("../controllers/usuariosController")
 const { validateUsuario } = require("../middleware/validation")
 
+// GET - Obtener todos los usuarios
+router.get("/", usuariosController.getAllUsuarios)
+
 // GET - Obtener usuario por ID
 router.get("/:id", usuariosController.getUsuarioById)
 

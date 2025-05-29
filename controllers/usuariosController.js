@@ -111,9 +111,25 @@ const deleteUsuario = async (req, res) => {
   }
 }
 
+/**
+ * Obtener todos los usuarios
+ * @param {Object} req - Objeto request de Express
+ * @param {Object} res - Objeto response de Express
+ */
+const getAllUsuarios = async (req, res) => {
+  try {
+    const usuarios = await Usuario.getAll();
+    return successResponse(res, usuarios, "Usuarios obtenidos exitosamente");
+  } catch (error) {
+    console.error("Error al obtener todos los usuarios:", error);
+    return errorResponse(res, "Error al obtener usuarios");
+  }
+};
+
 module.exports = {
   getUsuarioById,
   createUsuario,
   updateUsuario,
   deleteUsuario,
+  getAllUsuarios,
 }

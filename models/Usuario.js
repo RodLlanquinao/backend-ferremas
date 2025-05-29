@@ -280,6 +280,27 @@ class Usuario {
       throw error;
     }
   }
+  
+  /**
+   * Obtener todos los usuarios
+   * @returns {Promise<Array>} - Lista de todos los usuarios
+   */
+  static async getAll() {
+    try {
+      console.log(`[Usuario.getAll] Getting all users from database`);
+      const query = "SELECT * FROM usuarios ORDER BY id ASC";
+      const result = await pool.query(query);
+      console.log(`[Usuario.getAll] Retrieved ${result.rows.length} users successfully`);
+      return result.rows;
+    } catch (error) {
+      console.error(`[Usuario.getAll] ERROR: ${error.message}`);
+      console.error(`[Usuario.getAll] Error code: ${error.code}`);
+      console.error(`[Usuario.getAll] Error detail: ${error.detail || 'No detail'}`);
+      console.error(`[Usuario.getAll] Error query: ${error.query || 'No query info'}`);
+      console.error(`[Usuario.getAll] Stack trace: ${error.stack}`);
+      throw error;
+    }
+  }
 }
 
 module.exports = Usuario

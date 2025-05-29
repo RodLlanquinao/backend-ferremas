@@ -581,6 +581,54 @@ Elimina un producto del sistema.
 
 ## Usuarios
 
+### GET /usuarios
+
+Obtiene todos los usuarios del sistema.
+
+**Headers**
+
+```
+Authorization: Bearer {firebase_id_token}
+```
+
+**Respuesta Exitosa (200 OK)**
+
+```json
+{
+  "success": true,
+  "message": "Usuarios obtenidos exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Usuario Test",
+      "email": "test@example.com",
+      "rol": "cliente",
+      "created_at": "2025-05-25T23:13:12.386Z",
+      "updated_at": "2025-05-25T23:13:12.386Z",
+      "firebase_uid": null,
+      "email_verified": false,
+      "provider": "email",
+      "last_login": null,
+      "password_hash": null
+    },
+    {
+      "id": 3,
+      "nombre": "Cliente Test",
+      "email": "cliente.test@test.com",
+      "rol": "cliente",
+      "created_at": "2025-05-25T23:29:14.599Z",
+      "updated_at": "2025-05-25T23:29:14.599Z",
+      "firebase_uid": null,
+      "email_verified": false,
+      "provider": "email",
+      "last_login": null,
+      "password_hash": null
+    }
+  ],
+  "timestamp": "2025-05-29T16:35:38.391Z"
+}
+```
+
 ### GET /usuarios/:id
 
 Obtiene los datos de un usuario específico.

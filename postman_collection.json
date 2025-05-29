@@ -709,6 +709,89 @@
       "name": "Usuarios",
       "item": [
         {
+          "name": "Listar todos los usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Obtiene todos los usuarios del sistema (requiere autenticación con Firebase)"
+          },
+          "response": [
+            {
+              "name": "Usuarios obtenidos exitosamente",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{firebase_id_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/usuarios",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Usuarios obtenidos exitosamente\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"nombre\": \"Usuario Test\",\n      \"email\": \"test@example.com\",\n      \"rol\": \"cliente\",\n      \"created_at\": \"2025-05-25T23:13:12.386Z\",\n      \"updated_at\": \"2025-05-25T23:13:12.386Z\",\n      \"firebase_uid\": null,\n      \"email_verified\": false,\n      \"provider\": \"email\",\n      \"last_login\": null,\n      \"password_hash\": null\n    },\n    {\n      \"id\": 3,\n      \"nombre\": \"Cliente Test\",\n      \"email\": \"cliente.test@test.com\",\n      \"rol\": \"cliente\",\n      \"created_at\": \"2025-05-25T23:29:14.599Z\",\n      \"updated_at\": \"2025-05-25T23:29:14.599Z\",\n      \"firebase_uid\": null,\n      \"email_verified\": false,\n      \"provider\": \"email\",\n      \"last_login\": null,\n      \"password_hash\": null\n    }\n  ],\n  \"timestamp\": \"2025-05-29T16:35:38.391Z\"\n}"
+            },
+            {
+              "name": "No autenticado",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/usuarios",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Se requiere token de autenticación\",\n  \"status\": 401\n}"
+            }
+          ]
+        },
+        {
           "name": "Obtener usuario",
           "request": {
             "method": "GET",

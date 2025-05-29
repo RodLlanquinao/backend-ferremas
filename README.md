@@ -1,4 +1,4 @@
-# FERREMAS Backend API v2.0
+# FERREMAS Backend API v2.1
 ## Instituto Profesional DuocUC - Escuela de Informática
 
 ![DuocUC](https://img.shields.io/badge/DuocUC-Integración%20de%20Plataformas-orange)
@@ -192,6 +192,7 @@ La tabla `pedidos` ahora incluye los siguientes campos adicionales:
 - `GET /auth/status` - Verificar estado de configuración de Firebase
 
 ### Usuarios
+- `GET /usuarios` - Obtener todos los usuarios (requiere autenticación)
 - `GET /usuarios/:id` - Obtener usuario por ID (requiere autenticación)
 - `POST /usuarios` - Crear nuevo usuario (requiere autenticación)
 - `PUT /usuarios/:id` - Actualizar usuario (requiere autenticación)
@@ -335,6 +336,7 @@ La colección utiliza las siguientes variables que puedes configurar en tu entor
 - **DELETE** `/productos/:id`: Eliminar producto
 
 #### Usuarios
+- **GET**    `/usuarios`: Listar todos los usuarios
 - **GET**    `/usuarios/:id`: Obtener usuario
 - **POST**   `/usuarios`: Crear usuario
 - **PUT**    `/usuarios/:id`: Actualizar usuario
