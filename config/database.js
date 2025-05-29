@@ -81,7 +81,7 @@ console.log("🔒 Configuración de SSL:", sslConfig ? "Habilitado" : "Deshabili
 
 const pool = new Pool(poolConfig);
 // Gestión avanzada de eventos en el pool
-pool.on('error', (err, client) => {
+pool.on('error', (err) => {
   console.error('🔥 Error detallado del pool PostgreSQL:', {
     message: err.message,
     code: err.code,

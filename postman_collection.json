@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "FERREMAS Backend API",
+    "name": "API Backend FERREMAS",
     "description": "Colección de endpoints para el backend de FERREMAS - Incluye flujo completo de pedidos y pagos con Webpay, y autenticación con Firebase\nFlujo típico de un pedido:\n1. POST /auth/login → Iniciar sesión con Firebase\n2. POST /pedidos → Crear pedido (estado: pendiente)\n3. POST /api/webpay/crear-transaccion → Iniciar pago (estado: en_proceso)\n4. POST /api/webpay/retorno → Confirmar pago (estado: pagado/rechazado)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -179,11 +179,11 @@
   ],
   "item": [
     {
-      "name": "Authentication",
+      "name": "Autenticación",
       "description": "Endpoints de autenticación con Firebase - Incluye registro, login, verificación de token y obtención de datos del usuario autenticado",
       "item": [
         {
-          "name": "Register",
+          "name": "Registro",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/auth/register",
@@ -312,7 +312,7 @@
           ]
         },
         {
-          "name": "Login",
+          "name": "Iniciar Sesión",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/auth/login",
@@ -425,7 +425,7 @@
           ],
           "response": [
             {
-              "name": "Login exitoso",
+              "name": "Inicio de sesión exitoso",
               "originalRequest": {
                 "method": "POST",
                 "url": "{{base_url}}/auth/login",
@@ -442,7 +442,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"message\": \"Usa Firebase Authentication en el cliente para iniciar sesión\",\n    \"email\": \"test@example.com\"\n  },\n  \"message\": \"Información de login enviada\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"message\": \"Usa Firebase Authentication en el cliente para iniciar sesión\",\n    \"email\": \"test@example.com\"\n  },\n  \"message\": \"Información de inicio de sesión enviada\"\n}"
             },
             {
               "name": "Credenciales inválidas",
@@ -467,7 +467,7 @@
           ]
         },
         {
-          "name": "Verify Token",
+          "name": "Verificar Token",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/auth/verify-token",
@@ -528,7 +528,7 @@
           ]
         },
         {
-          "name": "Get User Info",
+          "name": "Obtener Información de Usuario",
           "request": {
             "method": "GET",
             "url": "{{base_url}}/auth/me",
@@ -582,7 +582,7 @@
           ]
         },
         {
-          "name": "Firebase Status",
+          "name": "Estado de Firebase",
           "request": {
             "method": "GET",
             "url": "{{base_url}}/auth/status",
@@ -610,10 +610,10 @@
       ]
     },
     {
-      "name": "Health Check",
+      "name": "Verificación de Salud",
       "item": [
         {
-          "name": "Base endpoint",
+          "name": "Endpoint base",
           "request": {
             "method": "GET",
             "url": "{{base_url}}/",
@@ -621,7 +621,7 @@
           }
         },
         {
-          "name": "Health check",
+          "name": "Verificación de salud",
           "request": {
             "method": "GET",
             "url": "{{base_url}}/health",
@@ -633,6 +633,136 @@
     {
       "name": "Productos",
       "item": [
+        {
+          "name": "Gestión de Almacén",
+          "item": [
+            {
+              "name": "Obtener Productos Disponibles en Almacén",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/productos/bodega/disponibles",
+                "description": "Obtiene todos los productos que tienen stock disponible en bodega"
+              },
+              "response": [
+                {
+                  "name": "Productos Disponibles",
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 34,\n      \"nombre\": \"Sierra Circular\",\n      \"modelo\": \"SC-1200\",\n      \"marca\": \"DeWalt\",\n      \"codigo\": \"DW-SC1200\",\n      \"precio\": 89990,\n      \"stock\": 15,\n      \"stock_bodega\": 20,\n      \"ubicacion_bodega\": \"A-123\",\n      \"stock_minimo\": 5,\n      \"categoria\": \"Herramientas Eléctricas\",\n      \"descripcion\": \"Sierra circular profesional 1200W\"\n    }\n  ],\n  \"message\": \"Productos disponibles en bodega obtenidos exitosamente\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Obtener Stock de Almacén",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/productos/{{test_product_id}}/stock-bodega",
+                "description": "Obtiene el stock en bodega de un producto específico"
+              },
+              "response": [
+                {
+                  "name": "Información de Stock",
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"data\": {\n    \"stock\": 20\n  },\n  \"message\": \"Stock de bodega obtenido exitosamente\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Actualizar Stock de Almacén",
+              "request": {
+                "method": "PUT",
+                "url": "{{base_url}}/productos/{{test_product_id}}/stock-bodega",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{firebase_id_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stock\": 25\n}",
+                  "description": "Nuevo valor de stock en bodega"
+                },
+                "description": "Actualiza el stock en bodega de un producto específico"
+              },
+              "response": [
+                {
+                  "name": "Stock Actualizado",
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 34,\n    \"nombre\": \"Sierra Circular\",\n    \"stock_bodega\": 25,\n    \"updated_at\": \"2025-05-29T16:35:38.391Z\"\n  },\n  \"message\": \"Stock de bodega actualizado exitosamente\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Obtener Productos por Debajo del Stock Mínimo",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/productos/bodega/bajo-stock",
+                "description": "Obtiene todos los productos que están por debajo de su stock mínimo en bodega"
+              },
+              "response": [
+                {
+                  "name": "Productos con Bajo Stock",
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 34,\n      \"nombre\": \"Sierra Circular\",\n      \"stock_bodega\": 3,\n      \"stock_minimo\": 5,\n      \"categoria\": \"Herramientas Eléctricas\"\n    }\n  ],\n  \"message\": \"Productos bajo stock mínimo obtenidos exitosamente\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Verificar Stock Mínimo",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/productos/{{test_product_id}}/verificar-stock",
+                "description": "Verifica si un producto específico está por debajo del stock mínimo"
+              },
+              "response": [
+                {
+                  "name": "Verificación de Stock",
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"data\": {\n    \"isBelowMinimum\": true,\n    \"message\": \"Producto está bajo el stock mínimo\"\n  },\n  \"message\": \"Estado de stock verificado exitosamente\"\n}"
+                }
+              ]
+            }
+          ]
+        },
         {
           "name": "Listar productos",
           "request": {
@@ -662,7 +792,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Sierra Circular\",\n  \"modelo\": \"SC-1200\",\n  \"marca\": \"DeWalt\",\n  \"codigo\": \"DW-SC1200\",\n  \"precio\": 89990,\n  \"stock\": 15,\n  \"categoria\": \"Herramientas Eléctricas\",\n  \"descripcion\": \"Sierra circular profesional 1200W\"\n}",
+              "raw": "{\n  \"nombre\": \"Sierra Circular\",\n  \"modelo\": \"SC-1200\",\n  \"marca\": \"DeWalt\",\n  \"codigo\": \"DW-SC1200\",\n  \"precio\": 89990,\n  \"stock\": 15,\n  \"categoria\": \"Herramientas Eléctricas\",\n  \"descripcion\": \"Sierra circular profesional 1200W\",\n  \"bodega_id\": 1,\n  \"stock_bodega\": 20,\n  \"ubicacion_bodega\": \"A-123\",\n  \"stock_minimo\": 5\n}",
               "description": "Datos del nuevo producto"
             },
             "description": "Crea un nuevo producto en el sistema"
@@ -681,7 +811,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Sierra Circular\",\n  \"modelo\": \"SC-1200\",\n  \"marca\": \"DeWalt\",\n  \"codigo\": \"DW-SC1200\",\n  \"precio\": 94990,\n  \"stock\": 20,\n  \"categoria\": \"Herramientas Eléctricas\",\n  \"descripcion\": \"Sierra circular profesional 1200W con maleta\"\n}",
+              "raw": "{\n  \"nombre\": \"Sierra Circular\",\n  \"modelo\": \"SC-1200\",\n  \"marca\": \"DeWalt\",\n  \"codigo\": \"DW-SC1200\",\n  \"precio\": 94990,\n  \"stock\": 20,\n  \"categoria\": \"Herramientas Eléctricas\",\n  \"descripcion\": \"Sierra circular profesional 1200W con maleta\",\n  \"bodega_id\": 1,\n  \"stock_bodega\": 25,\n  \"ubicacion_bodega\": \"A-123\",\n  \"stock_minimo\": 5\n}",
               "description": "Datos actualizados del producto"
             },
             "description": "Actualiza un producto existente"
@@ -1052,6 +1182,146 @@
       ]
     },
     {
+      "name": "Solicitudes de Sucursales",
+      "description": "Gestión de solicitudes de productos desde sucursales a bodega central",
+      "item": [
+        {
+          "name": "Listar Solicitudes",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/branch-requests",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene todas las solicitudes de productos"
+          }
+        },
+        {
+          "name": "Obtener Solicitud por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/branch-requests/{{branch_request_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene una solicitud específica por su ID"
+          }
+        },
+        {
+          "name": "Obtener Solicitudes por Sucursal",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/branch-requests/branch/{{sucursal_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene todas las solicitudes de una sucursal específica"
+          }
+        },
+        {
+          "name": "Crear Solicitud",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/branch-requests",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sucursal_id\": 1,\n  \"producto_id\": 8,\n  \"cantidad\": 5,\n  \"notas\": \"Solicitud de prueba para alicate universal\"\n}"
+            },
+            "description": "Crea una nueva solicitud de productos"
+          }
+        },
+        {
+          "name": "Aprobar Solicitud",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/branch-requests/{{branch_request_id}}/approve",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Aprueba una solicitud y reduce el stock en bodega"
+          }
+        },
+        {
+          "name": "Rechazar Solicitud",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/branch-requests/{{branch_request_id}}/reject",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Rechaza una solicitud de productos"
+          }
+        },
+        {
+          "name": "Marcar como Enviada",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/branch-requests/{{branch_request_id}}/ship",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Marca una solicitud como enviada"
+          }
+        },
+        {
+          "name": "Marcar como Recibida",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/branch-requests/{{branch_request_id}}/receive",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Marca una solicitud como recibida"
+          }
+        },
+        {
+          "name": "Eliminar Solicitud",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/branch-requests/{{branch_request_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Elimina una solicitud pendiente"
+          }
+        }
+      ]
+    },
+    {
       "name": "Webpay",
       "description": "Flujo de pago con Webpay - Desde la creación de la transacción hasta la confirmación del pago",
       "item": [
@@ -1213,6 +1483,16 @@
       "key": "test_user_password",
       "value": "password123",
       "description": "Contraseña de usuario de prueba para autenticación con Firebase"
+    },
+    {
+      "key": "branch_request_id",
+      "value": "1",
+      "description": "ID de solicitud de ejemplo"
+    },
+    {
+      "key": "sucursal_id",
+      "value": "1",
+      "description": "ID de sucursal de ejemplo"
     }
   ]
 }

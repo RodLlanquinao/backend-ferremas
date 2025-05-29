@@ -31,6 +31,7 @@ const pedidosRoutes = require("./routes/pedidos.routes")
 const contactoRoutes = require("./routes/contacto.routes")
 const webpayRoutes = require("./routes/webpay.routes")
 const authRoutes = require("./routes/auth.routes")
+const branchRequestsRoutes = require("./routes/branchRequests.routes")
 
 // Crear aplicación Express
 const app = express()
@@ -111,6 +112,7 @@ app.use("/pedidos", pedidosRoutes)
 app.use("/contacto", contactoRoutes)
 app.use("/api/webpay", webpayRoutes)
 app.use("/auth", authRoutes)
+app.use("/branch-requests", branchRequestsRoutes)
 
 /**
  * Middleware de manejo de errores
@@ -173,7 +175,6 @@ process.on("uncaughtException", (error) => {
   process.exit(1)
 })
 
-// Iniciar servidor
+// Iniciar el servidor
 startServer()
-
 module.exports = app

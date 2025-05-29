@@ -13,15 +13,52 @@
 
 const admin = require('firebase-admin');
 const { JWT_SECRET } = require('./environment');
+const fs = require('fs');
+const path = require('path');
 
-// Variables para configuración de Firebase
-const FIREBASE_CONFIG = {
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  privateKey: process.env.FIREBASE_PRIVATE_KEY ? 
-              process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined,
-  databaseURL: process.env.FIREBASE_DATABASE_URL
-};
+// Ruta al archivo de credenciales
+const serviceAccountPath = path.join(__dirname, '../serviceAccountKey.json');
+
+// Verificar si existe el archivo de credenciales
+let serviceAccount;
+if (fs.existsSync(serviceAccountPath)) {
+  try {
+    serviceAccount = require(serviceAccountPath);
+    console.log('✅ Archivo de credenciales de Firebase encontrado y cargado');
+  } catch (error) {
+    console.error('❌ Error al leer el archivo de credenciales de Firebase:', error);
+  }
+} else {
+  console.log('⚠️ Archivo de credenciales no encontrado, se intentará crear uno');
+  // Crear un archivo de credenciales a partir de variables de entorno
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    serviceAccount = {
+      "type": "service_account",
+      "project_id": process.env.FIREBASE_PROJECT_ID,
+      "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID || "key-id",
+      "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      "client_email": process.env.FIREBASE_CLIENT_EMAIL,
+      "client_id": process.env.FIREBASE_CLIENT_ID || "",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL)}`
+    };
+    
+    // Guardar el archivo para futuras ejecuciones
+    try {
+      fs.writeFileSync(serviceAccountPath, JSON.stringify(serviceAccount, null, 2));
+      console.log('✅ Archivo de credenciales de Firebase creado correctamente');
+    } catch (error) {
+      console.error('❌ Error al crear archivo de credenciales de Firebase:', error);
+    }
+  } else {
+    console.warn('⚠️ Variables de entorno de Firebase incompletas');
+  }
+}
+
+// Base de datos URL (opcional)
+const databaseURL = process.env.FIREBASE_DATABASE_URL;
 
 // Inicializar Firebase Admin solo una vez
 let firebaseAdmin;
@@ -33,7 +70,7 @@ function initializeFirebaseAdmin() {
   if (!firebaseAdmin) {
     try {
       // Comprobar si tenemos las credenciales necesarias
-      if (!FIREBASE_CONFIG.projectId || !FIREBASE_CONFIG.clientEmail || !FIREBASE_CONFIG.privateKey) {
+      if (!serviceAccount) {
         console.warn('⚠️ Credenciales de Firebase incompletas. Usando modo de desarrollo.');
         
         // Inicializar en modo de desarrollo con credenciales por defecto
@@ -41,15 +78,17 @@ function initializeFirebaseAdmin() {
           credential: admin.credential.applicationDefault()
         });
       } else {
-        // Inicializar con credenciales configuradas
-        firebaseAdmin = admin.initializeApp({
-          credential: admin.credential.cert({
-            projectId: FIREBASE_CONFIG.projectId,
-            clientEmail: FIREBASE_CONFIG.clientEmail,
-            privateKey: FIREBASE_CONFIG.privateKey
-          }),
-          databaseURL: FIREBASE_CONFIG.databaseURL
-        });
+        // Inicializar con credenciales del archivo JSON
+        const firebaseConfig = {
+          credential: admin.credential.cert(serviceAccount)
+        };
+        
+        // Añadir URL de base de datos si está disponible
+        if (databaseURL) {
+          firebaseConfig.databaseURL = databaseURL;
+        }
+        
+        firebaseAdmin = admin.initializeApp(firebaseConfig);
       }
       
       console.log('🔥 Firebase Admin SDK inicializado correctamente');

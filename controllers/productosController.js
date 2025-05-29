@@ -210,6 +210,97 @@ const deleteProducto = async (req, res) => {
   }
 }
 
+/**
+ * Obtener productos disponibles en bodega
+ * @param {Object} req - Objeto request de Express
+ * @param {Object} res - Objeto response de Express
+ */
+const getAvailableInWarehouse = async (req, res) => {
+  try {
+    const productos = await Producto.getAvailableInWarehouse();
+    return successResponse(res, productos, "Productos disponibles en bodega obtenidos exitosamente");
+  } catch (error) {
+    console.error("Error al obtener productos disponibles en bodega:", error);
+    return errorResponse(res, "Error al obtener productos disponibles en bodega");
+  }
+};
+
+/**
+ * Obtener stock de bodega para un producto
+ * @param {Object} req - Objeto request de Express
+ * @param {Object} res - Objeto response de Express
+ */
+const getWarehouseStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const stock = await Producto.getWarehouseStock(id);
+    return successResponse(res, { stock }, "Stock de bodega obtenido exitosamente");
+  } catch (error) {
+    console.error("Error al obtener stock de bodega:", error);
+    return errorResponse(res, "Error al obtener stock de bodega");
+  }
+};
+
+/**
+ * Actualizar stock de bodega para un producto
+ * @param {Object} req - Objeto request de Express
+ * @param {Object} res - Objeto response de Express
+ */
+const updateWarehouseStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stock } = req.body;
+    
+    if (stock === undefined || isNaN(stock) || stock < 0) {
+      return errorResponse(res, "El stock debe ser un número válido mayor o igual a cero", 400);
+    }
+    
+    const producto = await Producto.updateWarehouseStock(id, stock);
+    if (!producto) {
+      return notFoundResponse(res, "Producto");
+    }
+    
+    return successResponse(res, producto, "Stock de bodega actualizado exitosamente");
+  } catch (error) {
+    console.error("Error al actualizar stock de bodega:", error);
+    return errorResponse(res, "Error al actualizar stock de bodega");
+  }
+};
+
+/**
+ * Obtener productos por debajo del stock mínimo
+ * @param {Object} req - Objeto request de Express
+ * @param {Object} res - Objeto response de Express
+ */
+const getProductsBelowMinimumStock = async (req, res) => {
+  try {
+    const productos = await Producto.getProductsBelowMinimumStock();
+    return successResponse(res, productos, "Productos bajo stock mínimo obtenidos exitosamente");
+  } catch (error) {
+    console.error("Error al obtener productos bajo stock mínimo:", error);
+    return errorResponse(res, "Error al obtener productos bajo stock mínimo");
+  }
+};
+
+/**
+ * Verificar si un producto está por debajo del stock mínimo
+ * @param {Object} req - Objeto request de Express
+ * @param {Object} res - Objeto response de Express
+ */
+const checkMinimumStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isBelowMinimum = await Producto.checkMinimumStock(id);
+    return successResponse(res, { 
+      isBelowMinimum,
+      message: isBelowMinimum ? "Producto está bajo el stock mínimo" : "Producto tiene stock suficiente"
+    }, "Estado de stock verificado exitosamente");
+  } catch (error) {
+    console.error("Error al verificar stock mínimo:", error);
+    return errorResponse(res, "Error al verificar stock mínimo");
+  }
+};
+
 module.exports = {
   getAllProductos,
   getProductoById,
@@ -217,4 +308,9 @@ module.exports = {
   createProducto,
   updateProducto,
   deleteProducto,
+  getAvailableInWarehouse,
+  getWarehouseStock,
+  updateWarehouseStock,
+  getProductsBelowMinimumStock,
+  checkMinimumStock
 }

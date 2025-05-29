@@ -29,6 +29,8 @@ Este proyecto está completamente preparado para su evaluación académica. Incl
 - ✅ Colección de Postman actualizada con pruebas de Firebase
 - ✅ Variables de entorno incluidas (ambiente académico controlado)
 - ✅ Documentación completa y actualizada
+- ✅ Catálogo de productos de bodega implementado
+- ✅ Sistema de solicitudes de productos desde sucursales
 
 ## ℹ️ Nota Importante
 
@@ -59,6 +61,8 @@ http://localhost:8000
 - ✅ **Sistema de Pedidos**: Creación y gestión de pedidos con autenticación
 - ✅ **Formulario de Contacto**: Recepción y almacenamiento de mensajes
 - ✅ **Procesamiento de Pagos**: Integración completa con Webpay Plus de Transbank
+- ✅ **Catálogo de Bodega**: Gestión de productos en bodega con control de stock
+- ✅ **Solicitudes de Sucursales**: Sistema para solicitar productos desde sucursales a bodega central
 - ✅ **Base de Datos PostgreSQL**: Conexión segura con SSL
 - ✅ **Arquitectura MVC**: Separación clara de responsabilidades
 - ✅ **Scripts de Prueba**: Herramientas multiplataforma para probar pagos y autenticación
@@ -76,7 +80,8 @@ backend-ferremas/
 │   ├── usuariosController.js 
 │   ├── pedidosController.js
 │   ├── contactoController.js
-│   └── webpayController.js  # Controlador para pagos
+│   ├── webpayController.js  # Controlador para pagos
+│   └── branchRequestController.js # Controlador para solicitudes de sucursales
 ├── middleware/
 │   ├── authMiddleware.js    # Verificación de tokens Firebase
 │   ├── errorHandler.js      # Manejo centralizado de errores
@@ -84,17 +89,19 @@ backend-ferremas/
 │   └── cors.js             # Configuración CORS
 ├── models/
 │   ├── BaseModel.js        # Modelo base con métodos comunes
-│   ├── Producto.js
+│   ├── Producto.js         # Extendido con campos de bodega
 │   ├── Usuario.js          # Con campos Firebase
 │   ├── Pedido.js           # Con campos Webpay
-│   └── Contacto.js
+│   ├── Contacto.js
+│   └── BranchRequest.js    # Modelo para solicitudes de sucursales
 ├── routes/
-│   ├── auth.routes.js      # Autenticación Firebase
+│   ├── auth.routes.js       # Autenticación Firebase
 │   ├── productos.routes.js 
 │   ├── usuarios.routes.js
 │   ├── pedidos.routes.js
 │   ├── contacto.routes.js
-│   └── webpay.routes.js    # Rutas Webpay Plus
+│   ├── webpay.routes.js     # Rutas Webpay Plus
+│   └── branchRequests.routes.js # Rutas para solicitudes de sucursales
 ├── utils/
 │   ├── responseHelper.js   # Formato respuestas API
 │   ├── logger.js          # Sistema de logs
@@ -155,10 +162,14 @@ La base de datos PostgreSQL debe estar configurada localmente con las credencial
 
 Las siguientes tablas están disponibles en la base de datos:
 
-- ✅ `productos` - Catálogo de productos
+- ✅ `productos` - Catálogo de productos (extendido con campos de bodega)
 - ✅ `usuarios` - Gestión de usuarios
 - ✅ `pedidos` - Sistema de pedidos (ahora con campos de pago)
 - ✅ `contactos` - Mensajes de contacto
+- ✅ `bodegas` - Información de bodegas centrales
+- ✅ `sucursales` - Información de sucursales
+- ✅ `solicitudes_productos` - Solicitudes de productos desde sucursales a bodega central
+- ✅ `inventario_sucursales` - Inventario de productos en sucursales
 
 ### Campos adicionales para pagos
 
@@ -168,6 +179,31 @@ La tabla `pedidos` ahora incluye los siguientes campos adicionales:
 - ✅ `transbank_token` - Token de la transacción generado por Webpay
 - ✅ `transbank_status` - Estado de la transacción (INICIADA, AUTHORIZED, FAILED, etc.)
 - ✅ `buy_order` - Número de orden de compra generado para Webpay
+
+### Campos de bodega en productos
+
+La tabla `productos` ahora incluye los siguientes campos adicionales para gestión de bodega:
+
+- ✅ `bodega_id` - ID de la bodega donde se almacena el producto
+- ✅ `stock_bodega` - Cantidad de unidades disponibles en bodega
+- ✅ `ubicacion_bodega` - Ubicación física dentro de la bodega (pasillo, estante, etc.)
+- ✅ `stock_minimo` - Cantidad mínima que debe mantenerse en stock para reordenar
+
+### Solicitudes de productos desde sucursales
+
+La tabla `solicitudes_productos` contiene los siguientes campos:
+
+- ✅ `id` - ID único de la solicitud
+- ✅ `sucursal_id` - ID de la sucursal que realiza la solicitud
+- ✅ `producto_id` - ID del producto solicitado
+- ✅ `cantidad` - Cantidad solicitada
+- ✅ `estado` - Estado de la solicitud (pendiente, aprobada, rechazada, enviada, recibida)
+- ✅ `fecha_solicitud` - Fecha de creación de la solicitud
+- ✅ `fecha_respuesta` - Fecha de aprobación/rechazo de la solicitud
+- ✅ `fecha_entrega` - Fecha de envío/entrega de los productos
+- ✅ `usuario_solicitud` - ID del usuario que creó la solicitud
+- ✅ `usuario_respuesta` - ID del usuario que aprobó/rechazó la solicitud
+- ✅ `notas` - Observaciones adicionales
 
 ## 🔌 Endpoints Disponibles
 
@@ -211,10 +247,22 @@ La tabla `pedidos` ahora incluye los siguientes campos adicionales:
 - `POST /contacto` - Crear mensaje
 - `DELETE /contacto/:id` - Eliminar
 
-### Procesamiento de Pagos (Nuevo)
+### Procesamiento de Pagos
 - `POST /webpay/crear-transaccion` - Iniciar proceso de pago
 - `POST /webpay/retorno` - Endpoint de retorno para Webpay
 - `GET  /webpay/retorno` - Página final después del pago
+
+### Catálogo de Bodega y Solicitudes de Sucursales (Nuevo)
+- `GET /productos` - Obtener productos con información de bodega
+- `GET /branch-requests` - Obtener todas las solicitudes de productos
+- `GET /branch-requests/:id` - Obtener una solicitud específica
+- `GET /branch-requests/branch/:sucursalId` - Obtener solicitudes de una sucursal
+- `POST /branch-requests` - Crear nueva solicitud de productos
+- `PUT /branch-requests/:id/approve` - Aprobar solicitud (reduce stock en bodega)
+- `PUT /branch-requests/:id/reject` - Rechazar solicitud
+- `PUT /branch-requests/:id/ship` - Marcar solicitud como enviada
+- `PUT /branch-requests/:id/receive` - Marcar solicitud como recibida
+- `DELETE /branch-requests/:id` - Eliminar una solicitud pendiente
 
 ## 📋 Ejemplos de Respuestas
 
@@ -253,7 +301,11 @@ Todas las respuestas de la API siguen este formato estándar:
     "precio": 9990,
     "stock": 10,
     "categoria": "Test",
-    "descripcion": "Producto de prueba API"
+    "descripcion": "Producto de prueba API",
+    "bodega_id": 1,
+    "stock_bodega": 15,
+    "ubicacion_bodega": "A-12-3",
+    "stock_minimo": 5
   },
   "timestamp": "2025-05-25T23:30:40.604Z"
 }
@@ -295,16 +347,40 @@ Todas las respuestas de la API siguen este formato estándar:
 }
 ```
 
+### Solicitud de Productos desde Sucursal
+```json
+{
+  "success": true,
+  "message": "Solicitud de producto creada exitosamente",
+  "data": {
+    "id": 1,
+    "sucursal_id": 1,
+    "producto_id": 8,
+    "cantidad": 5,
+    "estado": "pendiente",
+    "fecha_solicitud": "2025-05-29T23:36:08.391Z",
+    "fecha_respuesta": null,
+    "fecha_entrega": null,
+    "usuario_solicitud": 1,
+    "usuario_respuesta": null,
+    "notas": "Solicitud de prueba para alicate universal",
+    "created_at": "2025-05-29T23:36:08.391Z",
+    "updated_at": "2025-05-29T23:36:08.391Z"
+  },
+  "timestamp": "2025-05-29T19:36:08.326Z"
+}
+```
+
 ## 🧪 Pruebas y Documentación
 
 ### Colección de Postman
-El proyecto incluye una colección completa de Postman (`postman_collection.json`) que contiene todos los endpoints disponibles, incluyendo la integración con Transbank.
+El proyecto incluye una colección completa de Postman (`postman_collection.json`) en español que contiene todos los endpoints disponibles, incluyendo la integración con Transbank y la gestión de bodega. La colección está completamente documentada en español para facilitar su uso.
 
 ### Importar la Colección en Postman
 1. Abrir Postman
 2. Hacer clic en "Import" (Importar)
 3. Seleccionar el archivo `postman_collection.json` ubicado en la raíz del proyecto
-4. Todas las solicitudes estarán organizadas en carpetas por funcionalidad
+4. Todas las solicitudes estarán organizadas en carpetas por funcionalidad, con nombres y descripciones en español
 
 ### Variables de Entorno en Postman
 La colección utiliza las siguientes variables que puedes configurar en tu entorno:
@@ -316,24 +392,28 @@ La colección utiliza las siguientes variables que puedes configurar en tu entor
 
 ### Grupos de Endpoints en la Colección
 
-#### Authentication
-- **POST** `/auth/register`: Registrar nuevo usuario con Firebase
-- **POST** `/auth/login`: Iniciar sesión (información para cliente)
-- **POST** `/auth/verify-token`: Verificar token de Firebase
-- **GET** `/auth/me`: Obtener información del usuario autenticado
-- **GET** `/auth/status`: Verificar estado de configuración de Firebase
+#### Autenticación
+- **POST** `/auth/register`: Registrar nuevo usuario
+- **POST** `/auth/login`: Iniciar sesión
+- **POST** `/auth/verify-token`: Verificar token
+- **GET** `/auth/me`: Obtener información del usuario actual
+- **GET** `/auth/status`: Verificar estado de la configuración
 
-#### Health Check
+#### Verificación de Salud
 - **GET** `/`: Endpoint base
 - **GET** `/health`: Verificar estado del servidor y BD
 
-#### Productos
+#### Productos y Gestión de Bodega
 - **GET**    `/productos`: Listar todos los productos
 - **GET**    `/productos/:id`: Obtener producto por ID
 - **GET**    `/productos/categoria/:nombre`: Productos por categoría
 - **POST**   `/productos`: Crear producto
 - **PUT**    `/productos/:id`: Actualizar producto
 - **DELETE** `/productos/:id`: Eliminar producto
+- **GET**    `/productos/bodega/disponibles`: Productos disponibles en almacén
+- **GET**    `/productos/:id/stock-bodega`: Consultar stock en almacén
+- **PUT**    `/productos/:id/stock-bodega`: Actualizar stock en almacén
+- **GET**    `/productos/bodega/bajo-stock`: Productos bajo stock mínimo
 
 #### Usuarios
 - **GET**    `/usuarios`: Listar todos los usuarios
@@ -356,9 +436,19 @@ La colección utiliza las siguientes variables que puedes configurar en tu entor
 - **DELETE** `/contacto/:id`: Eliminar mensaje
 
 #### Webpay (Procesamiento de Pagos)
-- **POST** `/webpay/crear-transaccion`: Iniciar pago
-- **POST** `/webpay/retorno`: Endpoint de retorno tras pago
-- **GET**  `/webpay/retorno`: Página final post-pago
+- **POST** `/api/webpay/crear-transaccion`: Iniciar proceso de pago
+- **POST** `/api/webpay/retorno`: Retorno después del pago
+- **GET**  `/api/webpay/retorno`: Página final post-pago
+
+#### Gestión de Solicitudes de Sucursales
+- **GET**  `/branch-requests`: Listar solicitudes
+- **GET**  `/branch-requests/:id`: Obtener solicitud por ID
+- **GET**  `/branch-requests/branch/:sucursalId`: Solicitudes por sucursal
+- **POST** `/branch-requests`: Crear solicitud de productos
+- **PUT**  `/branch-requests/:id/approve`: Aprobar solicitud
+- **PUT**  `/branch-requests/:id/reject`: Rechazar solicitud
+- **PUT**  `/branch-requests/:id/ship`: Marcar como enviada
+- **PUT**  `/branch-requests/:id/receive`: Marcar como recibida
 
 ### Pruebas de Procesamiento de Pagos con Transbank
 
@@ -440,6 +530,9 @@ El sistema implementa validaciones exhaustivas en todos los endpoints:
 - ✅ **Stock**: Obligatorio, entero positivo
 - ✅ **Categoría**: Obligatorio, string
 - ✅ **Descripción**: Obligatorio, string
+- ✅ **Stock de Bodega**: Opcional, entero positivo
+- ✅ **Ubicación en Bodega**: Opcional, string
+- ✅ **Stock Mínimo**: Opcional, entero positivo
 
 #### Usuarios
 - ✅ **Nombre**: Obligatorio, string
@@ -464,6 +557,14 @@ El sistema implementa validaciones exhaustivas en todos los endpoints:
 - ✅ **Email**: Obligatorio, formato válido
 - ✅ **Asunto**: Obligatorio, string
 - ✅ **Mensaje**: Obligatorio, string
+
+#### Solicitudes de Productos
+- ✅ **Sucursal ID**: Obligatorio, debe existir
+- ✅ **Producto ID**: Obligatorio, debe existir
+- ✅ **Cantidad**: Obligatorio, entero positivo
+- ✅ **Estado**: Valores permitidos: "pendiente", "aprobada", "rechazada", "enviada", "recibida"
+- ✅ **Usuario Solicitud**: ID del usuario que crea la solicitud
+- ✅ **Notas**: Opcional, string
 
 ## 📊 Monitoreo y Logging
 
@@ -551,14 +652,6 @@ node index.js
 - **webpay-test.sh**: Script bash para Mac/Linux
 - **curl**: Ejemplos de peticiones directas a la API
 
-## Contribución
-
-1. Fork el proyecto
-2. Crear una rama para tu feature (\`git checkout -b feature/AmazingFeature\`)
-3. Commit tus cambios (\`git commit -m 'Add some AmazingFeature'\`)
-4. Push a la rama (\`git push origin feature/AmazingFeature\`)
-5. Abrir un Pull Request
-
 ## 📚 Documentación Adicional
 
 - [Documentación de la API](docs/API.md)
@@ -572,16 +665,51 @@ Para soporte técnico:
 3. Consultar la documentación de la API
 4. Verificar la configuración en el archivo `.env`
 
+## 🏬 Gestión de Bodega y Sucursales
+
+### Flujo de Solicitud de Productos
+
+1. **Creación de Solicitud**: La sucursal crea una solicitud de productos a la bodega central
+2. **Revisión de Solicitud**: El administrador de bodega revisa la solicitud
+3. **Aprobación**: Si hay stock suficiente, la solicitud es aprobada y se reduce el stock de bodega
+4. **Envío**: Los productos son marcados como enviados a la sucursal
+5. **Recepción**: La sucursal confirma la recepción de los productos
+
+### Diagrama de Flujo de Solicitudes
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  1. Crear   │     │ 2. Aprobar  │     │  3. Enviar  │
+│  Solicitud  │────▶│  Solicitud  │────▶│  Productos  │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                               │
+                                               ▼
+┌─────────────┐                         ┌─────────────┐
+│ 5. Actualizar│                        │ 4. Recibir  │
+│  Inventario  │◀───────────────────────│  Productos  │
+└─────────────┘                         └─────────────┘
+```
+
+### Características de Gestión de Stock
+
+- ✅ **Control de Stock**: Seguimiento en tiempo real del stock en bodega
+- ✅ **Stock Mínimo**: Alerta cuando el stock está por debajo del mínimo definido
+- ✅ **Ubicaciones**: Registro de ubicación física de productos en bodega
+- ✅ **Validación**: Verificación automática de stock disponible al aprobar solicitudes
+- ✅ **Trazabilidad**: Seguimiento completo del ciclo de vida de las solicitudes
+
 ---
 
 **Nota sobre Variables de Entorno**: ⚠️ Las variables de entorno están incluidas intencionalmente en el repositorio ya que este es un ambiente académico controlado y las credenciales son de prueba (Webpay Integration).
 
-**Estado**: ✅ Listo para evaluación académica EV3
+**Estado**: ✅ Listo para evaluación académica EV2
 **Institución**: Instituto Profesional DuocUC - Escuela de Informática
 **Equipo**: Felipe López, Rodrigo Llanquinao, Alex Cayuqueo
 **Base de Datos**: ✅ Configurada para entorno local
-**Última actualización**: 26 de mayo de 2025
+**Última actualización**: 29 de mayo de 2025
 **Pruebas Completas**: ✅ Todos los endpoints verificados y funcionales
 **Firebase Authentication**: ✅ Sistema de autenticación implementado y probado
 **Integración Transbank**: ✅ Funcionando en ambiente de integración
 **Pagos con Webpay**: ✅ Flujo completo implementado y probado
+**Gestión de Bodega**: ✅ Sistema de catálogo de bodega implementado
+**Solicitudes de Sucursales**: ✅ Sistema completo de solicitudes implementado

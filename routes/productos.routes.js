@@ -14,6 +14,13 @@ router.get("/", productosController.getAllProductos)
 // GET - Obtener productos por categoría
 router.get("/categoria/:nombre", productosController.getProductosByCategoria)
 
+// Rutas de bodega
+router.get("/bodega/disponibles", productosController.getAvailableInWarehouse)
+router.get("/bodega/bajo-stock", productosController.getProductsBelowMinimumStock)
+router.get("/:id/stock-bodega", productosController.getWarehouseStock)
+router.put("/:id/stock-bodega", productosController.updateWarehouseStock)
+router.get("/:id/verificar-stock", productosController.checkMinimumStock)
+
 // GET - Obtener producto por ID
 router.get("/:id", productosController.getProductoById)
 

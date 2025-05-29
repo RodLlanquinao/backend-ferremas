@@ -1,3 +1,1350 @@
+# FERREMAS API Documentation v2.1
+
+## Índice
+
+1. [Introducción](#1-introducción)
+2. [Autenticación](#2-autenticación)
+3. [Productos](#3-productos)
+4. [Usuarios](#4-usuarios)
+5. [Pedidos](#5-pedidos)
+6. [Contacto](#6-contacto)
+7. [Webpay (Pagos)](#7-webpay-pagos)
+8. [Catálogo de Bodega](#8-catálogo-de-bodega)
+9. [Solicitudes de Sucursales](#9-solicitudes-de-sucursales)
+10. [Gestión de Errores](#10-gestión-de-errores)
+
+## 1. Introducción
+
+La API de FERREMAS proporciona acceso programático al catálogo de productos, gestión de usuarios, sistema de pedidos, procesamiento de pagos con Webpay, catálogo de productos en bodega y sistema de solicitudes desde sucursales.
+
+### Base URL
+
+```
+http://localhost:8000
+```
+
+### Formato de Respuestas
+
+Todas las respuestas siguen la siguiente estructura:
+
+```json
+{
+  "success": true,
+  "message": "Mensaje descriptivo",
+  "data": {},
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+- `success`: Booleano que indica si la operación fue exitosa
+- `message`: Mensaje descriptivo sobre el resultado
+- `data`: Datos de la respuesta (puede ser un objeto, array o null)
+- `timestamp`: Fecha y hora de la respuesta
+
+### Códigos de Estado HTTP
+
+- `200 OK`: Solicitud exitosa
+- `201 Created`: Recurso creado exitosamente
+- `400 Bad Request`: Error en los datos enviados
+- `401 Unauthorized`: No autenticado o token inválido
+- `403 Forbidden`: No tiene permisos suficientes
+- `404 Not Found`: Recurso no encontrado
+- `500 Internal Server Error`: Error en el servidor
+
+## 2. Autenticación
+
+La API utiliza Firebase Authentication para la gestión de usuarios. Para acceder a endpoints protegidos, se debe incluir un token JWT en el encabezado `Authorization`.
+
+### Encabezado de Autenticación
+
+```
+Authorization: Bearer <token_jwt>
+```
+
+### Endpoints de Autenticación
+
+#### Registrar nuevo usuario
+
+- **URL**: `/auth/register`
+- **Método**: `POST`
+- **Autenticación**: No requerida
+- **Descripción**: Registra un nuevo usuario en Firebase
+
+##### Cuerpo de la Petición
+
+```json
+{
+  "email": "usuario@example.com",
+  "password": "contraseña123",
+  "nombre": "Nombre Usuario",
+  "telefono": "912345678",
+  "direccion": "Av. Ejemplo 123"
+}
+```
+
+##### Respuesta Exitosa
+
+- **Código**: 201 Created
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Usuario registrado exitosamente",
+  "data": {
+    "uid": "firebase-uid-123456",
+    "email": "usuario@example.com",
+    "nombre": "Nombre Usuario"
+  },
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### Iniciar sesión
+
+- **URL**: `/auth/login`
+- **Método**: `POST`
+- **Autenticación**: No requerida
+- **Descripción**: Proporciona información para iniciar sesión con Firebase en el cliente
+
+##### Cuerpo de la Petición
+
+```json
+{
+  "email": "usuario@example.com",
+  "password": "contraseña123"
+}
+```
+
+##### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Datos para inicio de sesión",
+  "data": {
+    "apiKey": "firebase-api-key",
+    "authDomain": "proyecto-firebase.firebaseapp.com",
+    "projectId": "proyecto-firebase"
+  },
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### Verificar Token
+
+- **URL**: `/auth/verify-token`
+- **Método**: `POST`
+- **Autenticación**: Requerida
+- **Descripción**: Verifica si un token JWT es válido
+
+##### Cuerpo de la Petición
+
+```json
+{
+  "token": "token-jwt-firebase"
+}
+```
+
+##### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Token válido",
+  "data": {
+    "uid": "firebase-uid-123456",
+    "email": "usuario@example.com"
+  },
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+## 3. Productos
+
+Endpoints para la gestión de productos.
+
+### Obtener todos los productos
+
+- **URL**: `/productos`
+- **Método**: `GET`
+- **Autenticación**: No requerida
+- **Descripción**: Obtiene todos los productos
+
+#### Parámetros de Consulta (Query)
+
+- Ninguno
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Productos obtenidos exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Martillo de carpintero",
+      "modelo": "H100",
+      "marca": "Stanley",
+      "codigo": "STN-M100",
+      "precio": 5990,
+      "stock": 25,
+      "categoria": "Herramientas Manuales",
+      "descripcion": "Martillo ergonómico con cabeza de acero templado",
+      "bodega_id": 1,
+      "stock_bodega": 20,
+      "ubicacion_bodega": "Estante A2-B3",
+      "stock_minimo": 5
+    },
+    // ... más productos
+  ],
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+### Obtener producto por ID
+
+- **URL**: `/productos/:id`
+- **Método**: `GET`
+- **Autenticación**: No requerida
+- **Descripción**: Obtiene los detalles de un producto específico
+
+#### Parámetros de Ruta
+
+- `id` - ID del producto a obtener
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Producto obtenido exitosamente",
+  "data": {
+    "id": 1,
+    "nombre": "Martillo de carpintero",
+    "modelo": "H100",
+    "marca": "Stanley",
+    "codigo": "STN-M100",
+    "precio": 5990,
+    "stock": 25,
+    "categoria": "Herramientas Manuales",
+    "descripcion": "Martillo ergonómico con cabeza de acero templado",
+    "bodega_id": 1,
+    "stock_bodega": 20,
+    "ubicacion_bodega": "Estante A2-B3",
+    "stock_minimo": 5
+  },
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+### Obtener productos por categoría
+
+- **URL**: `/productos/categoria/:nombre`
+- **Método**: `GET`
+- **Autenticación**: No requerida
+- **Descripción**: Obtiene productos filtrados por categoría
+
+#### Parámetros de Ruta
+
+- `nombre` - Nombre de la categoría
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Similar a la respuesta de "Obtener todos los productos" pero filtrado por categoría
+
+### Crear producto
+
+- **URL**: `/productos`
+- **Método**: `POST`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Crea un nuevo producto
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "nombre": "Alicate universal",
+  "modelo": "AL-UNI",
+  "marca": "Total",
+  "codigo": "TTL-ALUNI",
+  "precio": 4990,
+  "stock": 30,
+  "categoria": "Herramientas Manuales",
+  "descripcion": "Alicate de alta calidad para trabajos de precisión",
+  "bodega_id": 1,
+  "stock_bodega": 25,
+  "ubicacion_bodega": "Estante A3-B4",
+  "stock_minimo": 5
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 201 Created
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Producto creado exitosamente",
+  "data": {
+    "id": 8,
+    "nombre": "Alicate universal",
+    "modelo": "AL-UNI",
+    "marca": "Total",
+    "codigo": "TTL-ALUNI",
+    "precio": 4990,
+    "stock": 30,
+    "categoria": "Herramientas Manuales",
+    "descripcion": "Alicate de alta calidad para trabajos de precisión",
+    "bodega_id": 1,
+    "stock_bodega": 25,
+    "ubicacion_bodega": "Estante A3-B4",
+    "stock_minimo": 5,
+    "created_at": "2025-05-29T15:30:00.000Z",
+    "updated_at": "2025-05-29T15:30:00.000Z"
+  },
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+### Actualizar producto
+
+- **URL**: `/productos/:id`
+- **Método**: `PUT`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Actualiza un producto existente
+
+#### Parámetros de Ruta
+
+- `id` - ID del producto a actualizar
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "nombre": "Alicate universal actualizado",
+  "precio": 5990,
+  "stock_bodega": 30,
+  "ubicacion_bodega": "Estante A3-B5"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Producto actualizado con todos sus campos
+
+### Eliminar producto
+
+- **URL**: `/productos/:id`
+- **Método**: `DELETE`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Elimina un producto existente
+
+#### Parámetros de Ruta
+
+- `id` - ID del producto a eliminar
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Producto \"Alicate universal\" eliminado correctamente",
+  "data": null,
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+## 4. Usuarios
+
+Endpoints para la gestión de usuarios.
+
+### Obtener todos los usuarios
+
+- **URL**: `/usuarios`
+- **Método**: `GET`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Obtiene todos los usuarios registrados
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Usuarios obtenidos exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Admin Usuario",
+      "email": "admin@ferremas.com",
+      "telefono": "912345678",
+      "direccion": "Av. Admin 123",
+      "rol": "admin",
+      "firebase_uid": "firebase-uid-123456"
+    },
+    // ... más usuarios
+  ],
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+### Obtener usuario por ID
+
+- **URL**: `/usuarios/:id`
+- **Método**: `GET`
+- **Autenticación**: Requerida
+- **Descripción**: Obtiene los detalles de un usuario específico
+
+#### Parámetros de Ruta
+
+- `id` - ID del usuario a obtener
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Usuario con el ID especificado
+
+### Crear usuario
+
+- **URL**: `/usuarios`
+- **Método**: `POST`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Crea un nuevo usuario (solo datos locales, no en Firebase)
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "nombre": "Nuevo Usuario",
+  "email": "nuevo@example.com",
+  "telefono": "987654321",
+  "direccion": "Av. Nueva 456",
+  "rol": "cliente",
+  "firebase_uid": "firebase-uid-654321"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 201 Created
+- **Contenido**: Usuario creado con todos sus campos
+
+### Actualizar usuario
+
+- **URL**: `/usuarios/:id`
+- **Método**: `PUT`
+- **Autenticación**: Requerida
+- **Descripción**: Actualiza un usuario existente
+
+#### Parámetros de Ruta
+
+- `id` - ID del usuario a actualizar
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "nombre": "Usuario Actualizado",
+  "telefono": "987654321",
+  "direccion": "Av. Actualizada 789"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Usuario actualizado con todos sus campos
+
+### Eliminar usuario
+
+- **URL**: `/usuarios/:id`
+- **Método**: `DELETE`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Elimina un usuario existente
+
+#### Parámetros de Ruta
+
+- `id` - ID del usuario a eliminar
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Mensaje de confirmación
+
+## 5. Pedidos
+
+Endpoints para la gestión de pedidos.
+
+### Obtener pedido por ID
+
+- **URL**: `/pedidos/:id`
+- **Método**: `GET`
+- **Autenticación**: Requerida
+- **Descripción**: Obtiene los detalles de un pedido específico
+
+#### Parámetros de Ruta
+
+- `id` - ID del pedido a obtener
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Pedido obtenido exitosamente",
+  "data": {
+    "id": 1,
+    "usuario_id": 1,
+    "producto_id": 8,
+    "cantidad": 2,
+    "estado": "pendiente",
+    "fecha_pedido": "2025-05-29T15:30:00.000Z",
+    "monto": 9980,
+    "transbank_token": null,
+    "transbank_status": null,
+    "buy_order": "ORD-1-123456",
+    "created_at": "2025-05-29T15:30:00.000Z",
+    "updated_at": "2025-05-29T15:30:00.000Z",
+    "producto": {
+      "nombre": "Alicate universal",
+      "precio": 4990
+    },
+    "usuario": {
+      "nombre": "Admin Usuario",
+      "email": "admin@ferremas.com"
+    }
+  },
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+### Obtener pedidos por usuario
+
+- **URL**: `/pedidos/usuario/:usuarioId`
+- **Método**: `GET`
+- **Autenticación**: Requerida
+- **Descripción**: Obtiene todos los pedidos de un usuario específico
+
+#### Parámetros de Ruta
+
+- `usuarioId` - ID del usuario
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Lista de pedidos del usuario
+
+### Crear pedido
+
+- **URL**: `/pedidos`
+- **Método**: `POST`
+- **Autenticación**: Requerida
+- **Descripción**: Crea un nuevo pedido
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "usuario_id": 1,
+  "producto_id": 8,
+  "cantidad": 2
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 201 Created
+- **Contenido**: Pedido creado con todos sus campos
+
+### Actualizar pedido
+
+- **URL**: `/pedidos/:id`
+- **Método**: `PUT`
+- **Autenticación**: Requerida
+- **Descripción**: Actualiza un pedido existente
+
+#### Parámetros de Ruta
+
+- `id` - ID del pedido a actualizar
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "cantidad": 3,
+  "estado": "pendiente"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Pedido actualizado con todos sus campos
+
+### Eliminar pedido
+
+- **URL**: `/pedidos/:id`
+- **Método**: `DELETE`
+- **Autenticación**: Requerida
+- **Descripción**: Elimina un pedido existente
+
+#### Parámetros de Ruta
+
+- `id` - ID del pedido a eliminar
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Mensaje de confirmación
+
+## 6. Contacto
+
+Endpoints para la gestión de mensajes de contacto.
+
+### Obtener todos los mensajes
+
+- **URL**: `/contacto`
+- **Método**: `GET`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Obtiene todos los mensajes de contacto
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Lista de mensajes de contacto
+
+### Obtener mensaje por ID
+
+- **URL**: `/contacto/:id`
+- **Método**: `GET`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Obtiene los detalles de un mensaje específico
+
+#### Parámetros de Ruta
+
+- `id` - ID del mensaje a obtener
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Mensaje de contacto con el ID especificado
+
+### Crear mensaje
+
+- **URL**: `/contacto`
+- **Método**: `POST`
+- **Autenticación**: No requerida
+- **Descripción**: Crea un nuevo mensaje de contacto
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "nombre": "Usuario Test",
+  "email": "test@example.com",
+  "asunto": "Consulta de Producto",
+  "mensaje": "Me gustaría recibir más información sobre el Alicate universal"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 201 Created
+- **Contenido**: Mensaje creado con todos sus campos
+
+### Eliminar mensaje
+
+- **URL**: `/contacto/:id`
+- **Método**: `DELETE`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Elimina un mensaje existente
+
+#### Parámetros de Ruta
+
+- `id` - ID del mensaje a eliminar
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Mensaje de confirmación
+
+## 7. Webpay (Pagos)
+
+Endpoints para el procesamiento de pagos con Webpay Plus de Transbank.
+
+### Crear transacción
+
+- **URL**: `/webpay/crear-transaccion`
+- **Método**: `POST`
+- **Autenticación**: Requerida
+- **Descripción**: Inicia el proceso de pago con Webpay
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "pedido_id": 1,
+  "return_url": "http://localhost:8000/webpay/retorno"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Transacción iniciada exitosamente",
+  "data": {
+    "token": "token-webpay-123456",
+    "url": "https://webpay.transbank.cl/...",
+    "pedido_id": 1
+  },
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+### Retorno de Webpay
+
+- **URL**: `/webpay/retorno`
+- **Método**: `POST`
+- **Descripción**: Endpoint de retorno para Webpay después del pago
+
+#### Cuerpo de la Petición
+
+Datos enviados por Webpay después del proceso de pago.
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Página HTML con resultado del pago
+
+### Página de resultado
+
+- **URL**: `/webpay/retorno`
+- **Método**: `GET`
+- **Descripción**: Página que muestra el resultado final del pago
+
+#### Parámetros de Consulta (Query)
+
+- `token_ws` - Token generado por Webpay
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Página HTML con resultado del pago
+
+## 8. Catálogo de Bodega
+
+Endpoints para la gestión del catálogo de productos en bodega.
+
+### Obtener productos disponibles en bodega
+
+- **URL**: `/productos/bodega/disponibles`
+- **Método**: `GET`
+- **Autenticación**: Requerida
+- **Descripción**: Obtiene todos los productos con stock disponible en bodega
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Productos disponibles en bodega obtenidos exitosamente",
+  "data": [
+    {
+      "id": 8,
+      "nombre": "Alicate universal",
+      "modelo": "AL-UNI",
+      "marca": "Total",
+      "codigo": "TTL-ALUNI",
+      "precio": 4990,
+      "stock": 31,
+      "categoria": "Herramientas Manuales",
+      "descripcion": "Mango aislado, corte preciso",
+      "bodega_id": 1,
+      "stock_bodega": 26,
+      "ubicacion_bodega": "Estante A3-B4",
+      "stock_minimo": 5,
+      "updated_at": "2025-05-29T23:36:18.145Z"
+    },
+    // ... más productos
+  ],
+  "timestamp": "2025-05-29T19:36:22.059Z"
+}
+```
+
+### Obtener productos bajo stock mínimo
+
+- **URL**: `/productos/bodega/bajo-minimo`
+- **Método**: `GET`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Obtiene todos los productos que están por debajo del stock mínimo definido
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Productos bajo stock mínimo obtenidos exitosamente",
+  "data": [
+    {
+      "id": 37,
+      "nombre": "Martillo Demoledor",
+      "stock_bodega": 4,
+      "stock_minimo": 5,
+      // ... otros campos
+    },
+    // ... más productos
+  ],
+  "timestamp": "2025-05-29T19:36:22.059Z"
+}
+```
+
+### Actualizar stock de bodega
+
+- **URL**: `/productos/:id/stock-bodega`
+- **Método**: `PUT`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Actualiza el stock de bodega para un producto específico
+
+#### Parámetros de Ruta
+
+- `id` - ID del producto a actualizar
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "stock_bodega": 30
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Stock de bodega actualizado exitosamente",
+  "data": {
+    "id": 8,
+    "nombre": "Alicate universal",
+    "stock_bodega": 30,
+    // ... otros campos
+  },
+  "timestamp": "2025-05-29T19:36:22.059Z"
+}
+```
+
+## 9. Solicitudes de Sucursales
+
+Endpoints para la gestión de solicitudes de productos desde sucursales a la bodega central.
+
+### Crear solicitud de producto
+
+- **URL**: `/branch-requests`
+- **Método**: `POST`
+- **Autenticación**: Requerida
+- **Descripción**: Crea una nueva solicitud de productos desde una sucursal a la bodega central
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "sucursal_id": 1,
+  "producto_id": 8,
+  "cantidad": 5,
+  "notas": "Solicitud de prueba para alicate universal"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 201 Created
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitud de producto creada exitosamente",
+  "data": {
+    "id": 1,
+    "sucursal_id": 1,
+    "producto_id": 8,
+    "cantidad": 5,
+    "estado": "pendiente",
+    "fecha_solicitud": "2025-05-29T23:36:08.391Z",
+    "fecha_respuesta": null,
+    "fecha_entrega": null,
+    "usuario_solicitud": 1,
+    "usuario_respuesta": null,
+    "notas": "Solicitud de prueba para alicate universal",
+    "created_at": "2025-05-29T23:36:08.391Z",
+    "updated_at": "2025-05-29T23:36:08.391Z"
+  },
+  "timestamp": "2025-05-29T19:36:08.326Z"
+}
+```
+
+### Obtener todas las solicitudes
+
+- **URL**: `/branch-requests`
+- **Método**: `GET`
+- **Autenticación**: Requerida
+- **Descripción**: Obtiene todas las solicitudes de productos
+
+#### Parámetros de Consulta (Query)
+
+- `estado` (opcional) - Filtrar por estado (pendiente, aprobada, rechazada, enviada, recibida)
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitudes obtenidas exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "sucursal_id": 1,
+      "producto_id": 8,
+      "cantidad": 5,
+      "estado": "recibida",
+      "fecha_solicitud": "2025-05-29T23:36:08.391Z",
+      "fecha_respuesta": "2025-05-29T23:36:18.145Z",
+      "fecha_entrega": "2025-05-29T23:36:30.397Z",
+      "usuario_solicitud": 1,
+      "usuario_respuesta": 1,
+      "notas": "Solicitud de prueba para alicate universal",
+      "created_at": "2025-05-29T23:36:08.391Z",
+      "updated_at": "2025-05-29T23:36:35.318Z",
+      "producto_nombre": "Alicate universal",
+      "sucursal_nombre": "Sucursal Principal"
+    },
+    // ... más solicitudes
+  ],
+  "timestamp": "2025-05-29T19:36:40.005Z"
+}
+```
+
+### Obtener solicitud por ID
+
+- **URL**: `/branch-requests/:id`
+- **Método**: `GET`
+- **Autenticación**: Requerida
+- **Descripción**: Obtiene los detalles de una solicitud específica
+
+#### Parámetros de Ruta
+
+- `id` - ID de la solicitud a obtener
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitud obtenida exitosamente",
+  "data": {
+    "id": 1,
+    "sucursal_id": 1,
+    "producto_id": 8,
+    "cantidad": 5,
+    "estado": "pendiente",
+    "fecha_solicitud": "2025-05-29T23:36:08.391Z",
+    "fecha_respuesta": null,
+    "fecha_entrega": null,
+    "usuario_solicitud": 1,
+    "usuario_respuesta": null,
+    "notas": "Solicitud de prueba para alicate universal",
+    "created_at": "2025-05-29T23:36:08.391Z",
+    "updated_at": "2025-05-29T23:36:08.391Z",
+    "producto_nombre": "Alicate universal",
+    "sucursal_nombre": "Sucursal Principal"
+  },
+  "timestamp": "2025-05-29T19:36:12.528Z"
+}
+```
+
+### Obtener solicitudes por sucursal
+
+- **URL**: `/branch-requests/branch/:sucursalId`
+- **Método**: `GET`
+- **Autenticación**: Requerida
+- **Descripción**: Obtiene todas las solicitudes de una sucursal específica
+
+#### Parámetros de Ruta
+
+- `sucursalId` - ID de la sucursal
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**: Similar a la respuesta de "Obtener Todas las Solicitudes" pero filtrado por sucursal
+
+### Aprobar solicitud
+
+- **URL**: `/branch-requests/:id/approve`
+- **Método**: `PUT`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Aprueba una solicitud pendiente y reduce el stock de bodega
+
+#### Parámetros de Ruta
+
+- `id` - ID de la solicitud a aprobar
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitud aprobada exitosamente",
+  "data": {
+    "id": 1,
+    "sucursal_id": 1,
+    "producto_id": 8,
+    "cantidad": 5,
+    "estado": "aprobada",
+    "fecha_solicitud": "2025-05-29T23:36:08.391Z",
+    "fecha_respuesta": "2025-05-29T23:36:18.145Z",
+    "fecha_entrega": null,
+    "usuario_solicitud": 1,
+    "usuario_respuesta": 1,
+    "notas": "Solicitud de prueba para alicate universal",
+    "created_at": "2025-05-29T23:36:08.391Z",
+    "updated_at": "2025-05-29T23:36:18.145Z"
+  },
+  "timestamp": "2025-05-29T19:36:18.746Z"
+}
+```
+
+### Rechazar solicitud
+
+- **URL**: `/branch-requests/:id/reject`
+- **Método**: `PUT`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Rechaza una solicitud pendiente
+
+#### Parámetros de Ruta
+
+- `id` - ID de la solicitud a rechazar
+
+#### Cuerpo de la Petición
+
+```json
+{
+  "motivo": "Stock insuficiente en bodega"
+}
+```
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitud rechazada exitosamente",
+  "data": {
+    "id": 2,
+    "estado": "rechazada",
+    "fecha_respuesta": "2025-05-29T23:40:18.145Z",
+    "usuario_respuesta": 1,
+    "notas": "Stock insuficiente en bodega",
+    // ... otros campos
+  },
+  "timestamp": "2025-05-29T19:40:18.746Z"
+}
+```
+
+### Marcar solicitud como enviada
+
+- **URL**: `/branch-requests/:id/ship`
+- **Método**: `PUT`
+- **Autenticación**: Requerida (admin)
+- **Descripción**: Marca una solicitud aprobada como enviada
+
+#### Parámetros de Ruta
+
+- `id` - ID de la solicitud a marcar como enviada
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitud marcada como enviada exitosamente",
+  "data": {
+    "id": 1,
+    "sucursal_id": 1,
+    "producto_id": 8,
+    "cantidad": 5,
+    "estado": "enviada",
+    "fecha_solicitud": "2025-05-29T23:36:08.391Z",
+    "fecha_respuesta": "2025-05-29T23:36:18.145Z",
+    "fecha_entrega": "2025-05-29T23:36:30.397Z",
+    "usuario_solicitud": 1,
+    "usuario_respuesta": 1,
+    "notas": "Solicitud de prueba para alicate universal",
+    "created_at": "2025-05-29T23:36:08.391Z",
+    "updated_at": "2025-05-29T23:36:30.397Z"
+  },
+  "timestamp": "2025-05-29T19:36:30.330Z"
+}
+```
+
+### Marcar solicitud como recibida
+
+- **URL**: `/branch-requests/:id/receive`
+- **Método**: `PUT`
+- **Autenticación**: Requerida
+- **Descripción**: Marca una solicitud enviada como recibida
+
+#### Parámetros de Ruta
+
+- `id` - ID de la solicitud a marcar como recibida
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitud marcada como recibida exitosamente",
+  "data": {
+    "id": 1,
+    "sucursal_id": 1,
+    "producto_id": 8,
+    "cantidad": 5,
+    "estado": "recibida",
+    "fecha_solicitud": "2025-05-29T23:36:08.391Z",
+    "fecha_respuesta": "2025-05-29T23:36:18.145Z",
+    "fecha_entrega": "2025-05-29T23:36:30.397Z",
+    "usuario_solicitud": 1,
+    "usuario_respuesta": 1,
+    "notas": "Solicitud de prueba para alicate universal",
+    "created_at": "2025-05-29T23:36:08.391Z",
+    "updated_at": "2025-05-29T23:36:35.318Z"
+  },
+  "timestamp": "2025-05-29T19:36:35.250Z"
+}
+```
+
+### Eliminar solicitud
+
+- **URL**: `/branch-requests/:id`
+- **Método**: `DELETE`
+- **Autenticación**: Requerida
+- **Descripción**: Elimina una solicitud pendiente
+
+#### Parámetros de Ruta
+
+- `id` - ID de la solicitud a eliminar
+
+#### Respuesta Exitosa
+
+- **Código**: 200 OK
+- **Contenido**:
+
+```json
+{
+  "success": true,
+  "message": "Solicitud eliminada exitosamente",
+  "data": null,
+  "timestamp": "2025-05-29T19:38:35.250Z"
+}
+```
+
+### Ciclo de Vida de las Solicitudes
+
+Las solicitudes de productos siguen el siguiente ciclo de vida:
+
+1. **pendiente**: Estado inicial cuando se crea una solicitud
+2. **aprobada**: La solicitud ha sido aprobada y el stock en bodega ha sido reducido
+3. **rechazada**: La solicitud ha sido rechazada (no hay stock suficiente u otros motivos)
+4. **enviada**: Los productos han sido enviados desde la bodega a la sucursal
+5. **recibida**: La sucursal ha confirmado la recepción de los productos
+
+#### Diagrama de Transiciones de Estado
+
+```
+┌───────────┐      ┌───────────┐      ┌───────────┐
+│           │──────►           │──────►           │
+│ pendiente │      │ aprobada  │      │  enviada  │
+│           │      │           │      │           │
+└───────────┘      └───────────┘      └───────────┘
+      │                                      │
+      │                                      │
+      ▼                                      ▼
+┌───────────┐                         ┌───────────┐
+│           │                         │           │
+│ rechazada │                         │ recibida  │
+│           │                         │           │
+└───────────┘                         └───────────┘
+```
+
+## 10. Gestión de Errores
+
+Todas las respuestas de error siguen un formato consistente:
+
+```json
+{
+  "success": false,
+  "message": "Mensaje descriptivo del error",
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+### Errores Comunes
+
+#### Recurso No Encontrado
+
+- **Código**: 404 Not Found
+- **Contenido**:
+
+```json
+{
+  "success": false,
+  "message": "Producto no encontrado",
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### No Autorizado
+
+- **Código**: 401 Unauthorized
+- **Contenido**:
+
+```json
+{
+  "success": false,
+  "message": "No autorizado",
+  "error": "Token de autenticación no proporcionado",
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### Acceso Prohibido
+
+- **Código**: 403 Forbidden
+- **Contenido**:
+
+```json
+{
+  "success": false,
+  "message": "Acceso denegado",
+  "error": "No tienes permiso para realizar esta acción",
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### Error de Validación
+
+- **Código**: 400 Bad Request
+- **Contenido**:
+
+```json
+{
+  "success": false,
+  "message": "Error de validación",
+  "errors": [
+    "El nombre es obligatorio",
+    "El precio debe ser un número válido mayor a cero"
+  ],
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### Error de Stock
+
+- **Código**: 400 Bad Request
+- **Contenido**:
+
+```json
+{
+  "success": false,
+  "message": "Stock insuficiente en bodega. Solicitado: 5, Disponible: 3",
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### Error de Estado
+
+- **Código**: 400 Bad Request
+- **Contenido**:
+
+```json
+{
+  "success": false,
+  "message": "No se puede marcar como recibida porque la solicitud no está enviada. Estado actual: pendiente",
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
+#### Error Interno del Servidor
+
+- **Código**: 500 Internal Server Error
+- **Contenido**:
+
+```json
+{
+  "success": false,
+  "message": "Error interno del servidor",
+  "timestamp": "2025-05-29T15:30:00.000Z"
+}
+```
+
 # FERREMAS Backend API v2 - Documentación
 
 Esta documentación proporciona detalles completos sobre todos los endpoints disponibles en la API de FERREMAS Backend, incluyendo la autenticación con Firebase y la integración con Transbank para procesamiento de pagos.
