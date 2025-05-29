@@ -1,10 +1,614 @@
 {
   "info": {
     "name": "FERREMAS Backend API",
-    "description": "Colección de endpoints para el backend de FERREMAS",
+    "description": "Colección de endpoints para el backend de FERREMAS - Incluye flujo completo de pedidos y pagos con Webpay, y autenticación con Firebase\nFlujo típico de un pedido:\n1. POST /auth/login → Iniciar sesión con Firebase\n2. POST /pedidos → Crear pedido (estado: pendiente)\n3. POST /api/webpay/crear-transaccion → Iniciar pago (estado: en_proceso)\n4. POST /api/webpay/retorno → Confirmar pago (estado: pagado/rechazado)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Configuración de Firebase",
+          "const FIREBASE_CONFIG = {",
+          "    apiKey: \"AIzaSyDxUSQ1UzDGNA-P3a2F_lLaNPIuiZsqckY\",",
+          "    projectId: \"ferremas-backend-a1e13\"",
+          "};",
+          "",
+          "// Credenciales de prueba",
+          "const TEST_CREDENTIALS = {",
+          "    email: pm.environment.get('test_user_email') || 'test@example.com',",
+          "    password: pm.environment.get('test_user_password') || 'password123'",
+          "};",
+          "",
+          "// Función para verificar si el token ha expirado",
+          "function isTokenExpired() {",
+          "    const token = pm.environment.get('firebase_id_token');",
+          "    if (!token) return true;",
+          "    ",
+          "    try {",
+          "        const [, payload] = token.split('.');",
+          "        if (!payload) return true;",
+          "        ",
+          "        // Intentar decodificar el payload del JWT",
+          "        let decodedPayload = payload;",
+          "        try {",
+          "            // Convertir de base64 a JSON",
+          "            decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));",
+          "            const { exp } = JSON.parse(decodedPayload);",
+          "            if (!exp) return true;",
+          "            return Date.now() >= exp * 1000;",
+          "        } catch (e) {",
+          "            console.log('Error decodificando token:', e);",
+          "            return true;",
+          "        }",
+          "    } catch (e) {",
+          "        console.log('Error verificando token:', e);",
+          "        return true;",
+          "    }",
+          "}",
+          "",
+          "// Función para obtener un token directamente de Firebase REST API",
+          "async function getDirectFirebaseToken() {",
+          "    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_CONFIG.apiKey}`;",
+          "    ",
+          "    try {",
+          "        console.log('🔄 Intentando obtener token con credenciales:', TEST_CREDENTIALS.email);",
+          "        ",
+          "        // Primero verificar si el usuario existe, si no, intentar crearlo",
+          "        try {",
+          "            const signInResponse = await pm.sendRequest({",
+          "                url: url,",
+          "                method: 'POST',",
+          "                header: {",
+          "                    'Content-Type': 'application/json'",
+          "                },",
+          "                body: {",
+          "                    mode: 'raw',",
+          "                    raw: JSON.stringify({",
+          "                        email: TEST_CREDENTIALS.email,",
+          "                        password: TEST_CREDENTIALS.password,",
+          "                        returnSecureToken: true",
+          "                    })",
+          "                }",
+          "            });",
+          "",
+          "            const jsonResponse = signInResponse.json();",
+          "            ",
+          "            if (jsonResponse.idToken) {",
+          "                pm.environment.set('firebase_id_token', jsonResponse.idToken);",
+          "                console.log('✅ Token obtenido directamente de Firebase:', jsonResponse.idToken.substring(0, 10) + '...');",
+          "                return jsonResponse.idToken;",
+          "            } else if (jsonResponse.error && jsonResponse.error.message === 'EMAIL_NOT_FOUND') {",
+          "                // Usuario no existe, intentar crearlo",
+          "                console.log('⚠️ Usuario no encontrado, intentando registrarlo...');",
+          "                throw new Error('USER_NOT_FOUND');",
+          "            } else {",
+          "                throw new Error(jsonResponse.error?.message || 'Error desconocido');",
+          "            }",
+          "        } catch (error) {",
+          "            // Si el usuario no existe, intentar crearlo",
+          "            if (error.message === 'USER_NOT_FOUND') {",
+          "                const signUpUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_CONFIG.apiKey}`;",
+          "                ",
+          "                const signUpResponse = await pm.sendRequest({",
+          "                    url: signUpUrl,",
+          "                    method: 'POST',",
+          "                    header: {",
+          "                        'Content-Type': 'application/json'",
+          "                    },",
+          "                    body: {",
+          "                        mode: 'raw',",
+          "                        raw: JSON.stringify({",
+          "                            email: TEST_CREDENTIALS.email,",
+          "                            password: TEST_CREDENTIALS.password,",
+          "                            returnSecureToken: true",
+          "                        })",
+          "                    }",
+          "                });",
+          "                ",
+          "                const signUpJson = signUpResponse.json();",
+          "                ",
+          "                if (signUpJson.idToken) {",
+          "                    pm.environment.set('firebase_id_token', signUpJson.idToken);",
+          "                    console.log('✅ Usuario creado y token obtenido:', signUpJson.idToken.substring(0, 10) + '...');",
+          "                    ",
+          "                    // Ahora registrar el usuario en el backend",
+          "                    const backendResponse = await pm.sendRequest({",
+          "                        url: pm.environment.get('base_url') + '/auth/register',",
+          "                        method: 'POST',",
+          "                        header: {",
+          "                            'Content-Type': 'application/json'",
+          "                        },",
+          "                        body: {",
+          "                            mode: 'raw',",
+          "                            raw: JSON.stringify({",
+          "                                email: TEST_CREDENTIALS.email,",
+          "                                password: TEST_CREDENTIALS.password,",
+          "                                nombre: 'Usuario Postman',",
+          "                                rol: 'cliente'",
+          "                            })",
+          "                        }",
+          "                    });",
+          "                    ",
+          "                    console.log('Backend registro respuesta:', backendResponse.status);",
+          "                    ",
+          "                    return signUpJson.idToken;",
+          "                } else {",
+          "                    throw new Error('No se pudo crear el usuario');",
+          "                }",
+          "            } else {",
+          "                throw error;",
+          "            }",
+          "        }",
+          "    } catch (error) {",
+          "        console.error('❌ Error obteniendo token directamente de Firebase:', error);",
+          "        return null;",
+          "    }",
+          "}",
+          "",
+          "// Verificar si necesitamos un token",
+          "const currentPath = pm.request.url.getPath();",
+          "const needsToken = !currentPath.includes('/auth/register') && ",
+          "                    !currentPath.includes('/auth/login') && ",
+          "                    !currentPath.includes('/auth/status');",
+          "",
+          "// Verificar y renovar token si es necesario",
+          "if (needsToken && isTokenExpired()) {",
+          "    console.log('🔄 Token expirado o no existe, obteniendo uno nuevo...');",
+          "    getDirectFirebaseToken();",
+          "} else if (needsToken) {",
+          "    console.log('✅ Token válido encontrado');",
+          "} else {",
+          "    console.log('ℹ️ No se requiere token para esta solicitud');",
+          "}",
+          "",
+          "// Añadir el token al header de la solicitud si existe y es necesario",
+          "const token = pm.environment.get('firebase_id_token');",
+          "if (token && needsToken) {",
+          "    console.log('🔒 Añadiendo token al header de la solicitud');",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: `Bearer ${token}`",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
   "item": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints de autenticación con Firebase - Incluye registro, login, verificación de token y obtención de datos del usuario autenticado",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_user_email}}\",\n  \"password\": \"{{test_user_password}}\",\n  \"nombre\": \"Usuario Test\",\n  \"rol\": \"cliente\"\n}",
+              "description": "Datos para registrar un nuevo usuario en Firebase y BD local"
+            },
+            "description": "Registra un nuevo usuario usando Firebase Authentication y crea el registro correspondiente en la base de datos local"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verificar la respuesta de registro",
+                  "pm.test(\"Registro exitoso o usuario ya existe\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 409]);",
+                  "    ",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    if (responseData.success) {",
+                  "        console.log('✅ Usuario registrado correctamente');",
+                  "        ",
+                  "        // Obtener token para el usuario recién registrado",
+                  "        pm.sendRequest({",
+                  "            url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDxUSQ1UzDGNA-P3a2F_lLaNPIuiZsqckY`,",
+                  "            method: 'POST',",
+                  "            header: {",
+                  "                'Content-Type': 'application/json'",
+                  "            },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({",
+                  "                    email: pm.environment.get('test_user_email'),",
+                  "                    password: pm.environment.get('test_user_password'),",
+                  "                    returnSecureToken: true",
+                  "                })",
+                  "            }",
+                  "        }, function(err, res) {",
+                  "            if (!err && res.json().idToken) {",
+                  "                const token = res.json().idToken;",
+                  "                pm.environment.set('firebase_id_token', token);",
+                  "                console.log('✅ Token obtenido automáticamente después del registro');",
+                  "            }",
+                  "        });",
+                  "    } else if (pm.response.code === 409) {",
+                  "        console.log('⚠️ El usuario ya existe, se intentará iniciar sesión');",
+                  "        ",
+                  "        // Si el usuario ya existe, intentar iniciar sesión",
+                  "        pm.sendRequest({",
+                  "            url: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDxUSQ1UzDGNA-P3a2F_lLaNPIuiZsqckY`,",
+                  "            method: 'POST',",
+                  "            header: {",
+                  "                'Content-Type': 'application/json'",
+                  "            },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({",
+                  "                    email: pm.environment.get('test_user_email'),",
+                  "                    password: pm.environment.get('test_user_password'),",
+                  "                    returnSecureToken: true",
+                  "                })",
+                  "            }",
+                  "        }, function(err, res) {",
+                  "            if (!err && res.json().idToken) {",
+                  "                const token = res.json().idToken;",
+                  "                pm.environment.set('firebase_id_token', token);",
+                  "                console.log('✅ Token obtenido mediante inicio de sesión');",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Registro exitoso",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/register",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"nombre\": \"Usuario Test\",\n  \"rol\": \"cliente\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 9,\n    \"nombre\": \"Usuario Test\",\n    \"email\": \"test@example.com\",\n    \"rol\": \"cliente\",\n    \"uid\": \"f1r3b4s3u1d123456789\"\n  },\n  \"message\": \"Usuario registrado exitosamente\"\n}"
+            },
+            {
+              "name": "Email ya registrado",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/register",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"nombre\": \"Usuario Test\",\n  \"rol\": \"cliente\"\n}"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Ya existe un usuario con ese email\",\n  \"status\": 409\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_user_email}}\",\n  \"password\": \"{{test_user_password}}\"\n}",
+              "description": "Credenciales para iniciar sesión"
+            },
+            "description": "Inicia sesión de usuario. NOTA: Esta prueba obtendrá un token directamente de Firebase sin depender del frontend."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Obtener token directamente de Firebase REST API",
+                  "const FIREBASE_CONFIG = {",
+                  "    apiKey: \"AIzaSyDxUSQ1UzDGNA-P3a2F_lLaNPIuiZsqckY\"",
+                  "};",
+                  "",
+                  "const TEST_CREDENTIALS = {",
+                  "    email: pm.environment.get('test_user_email') || 'test@example.com',",
+                  "    password: pm.environment.get('test_user_password') || 'password123'",
+                  "};",
+                  "",
+                  "// Función para obtener token de Firebase",
+                  "async function getFirebaseToken() {",
+                  "    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_CONFIG.apiKey}`;",
+                  "    ",
+                  "    try {",
+                  "        const response = await pm.sendRequest({",
+                  "            url: url,",
+                  "            method: 'POST',",
+                  "            header: {",
+                  "                'Content-Type': 'application/json'",
+                  "            },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({",
+                  "                    email: TEST_CREDENTIALS.email,",
+                  "                    password: TEST_CREDENTIALS.password,",
+                  "                    returnSecureToken: true",
+                  "                })",
+                  "            }",
+                  "        });",
+                  "",
+                  "        const jsonResponse = response.json();",
+                  "        ",
+                  "        if (jsonResponse.idToken) {",
+                  "            pm.environment.set('firebase_id_token', jsonResponse.idToken);",
+                  "            console.log('✅ Token guardado en variables de entorno');",
+                  "            return jsonResponse.idToken;",
+                  "        } else {",
+                  "            console.error('❌ No se pudo obtener el token:', jsonResponse);",
+                  "            return null;",
+                  "        }",
+                  "    } catch (error) {",
+                  "        console.error('❌ Error obteniendo token:', error);",
+                  "        return null;",
+                  "    }",
+                  "}",
+                  "",
+                  "// Primero verificar la respuesta del backend",
+                  "pm.test(\"Respuesta del backend correcta\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "// Luego obtener un token real de Firebase",
+                  "getFirebaseToken().then(token => {",
+                  "    if (token) {",
+                  "        pm.test(\"Token de Firebase obtenido correctamente\", function() {",
+                  "            pm.expect(token).to.be.a('string');",
+                  "            pm.expect(token.length).to.be.greaterThan(50);",
+                  "        });",
+                  "        ",
+                  "        // Verificar el token en el backend",
+                  "        pm.sendRequest({",
+                  "            url: pm.environment.get('base_url') + '/auth/verify-token',",
+                  "            method: 'POST',",
+                  "            header: {",
+                  "                'Content-Type': 'application/json'",
+                  "            },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({",
+                  "                    idToken: token",
+                  "                })",
+                  "            }",
+                  "        }, function(err, res) {",
+                  "            if (!err) {",
+                  "                pm.test(\"Token verificado en el backend\", function() {",
+                  "                    pm.expect(res.code).to.be.oneOf([200, 201]);",
+                  "                    pm.expect(res.json().success).to.be.true;",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Login exitoso",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"message\": \"Usa Firebase Authentication en el cliente para iniciar sesión\",\n    \"email\": \"test@example.com\"\n  },\n  \"message\": \"Información de login enviada\"\n}"
+            },
+            {
+              "name": "Credenciales inválidas",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"noexiste@example.com\",\n  \"password\": \"password123\"\n}"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Credenciales inválidas\",\n  \"status\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/verify-token",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"{{firebase_id_token}}\"\n}",
+              "description": "Token de ID de Firebase a verificar"
+            },
+            "description": "Verifica un token de ID de Firebase y devuelve la información del usuario. Este endpoint debe utilizarse después de autenticar en el cliente para obtener la sesión en el backend."
+          },
+          "response": [
+            {
+              "name": "Token válido",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/verify-token",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE...truncated...\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user\": {\n      \"id\": 9,\n      \"uid\": \"f1r3b4s3u1d123456789\",\n      \"email\": \"test@example.com\",\n      \"nombre\": \"Usuario Test\",\n      \"rol\": \"cliente\",\n      \"emailVerified\": true\n    }\n  },\n  \"message\": \"Token verificado correctamente\"\n}"
+            },
+            {
+              "name": "Token inválido",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/auth/verify-token",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"invalid_token_here\"\n}"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Token inválido o expirado\",\n  \"status\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get User Info",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/me",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene la información del usuario autenticado actualmente"
+          },
+          "response": [
+            {
+              "name": "Autenticado correctamente",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/auth/me",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE...truncated..."
+                  }
+                ]
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 9,\n    \"uid\": \"f1r3b4s3u1d123456789\",\n    \"email\": \"test@example.com\",\n    \"nombre\": \"Usuario Test\",\n    \"rol\": \"cliente\",\n    \"emailVerified\": true\n  },\n  \"message\": \"Información del usuario obtenida exitosamente\"\n}"
+            },
+            {
+              "name": "No autenticado",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/auth/me"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Se requiere token de autenticación\",\n  \"status\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Firebase Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/status",
+            "description": "Verifica el estado de la configuración de Firebase en el servidor"
+          },
+          "response": [
+            {
+              "name": "Estado correcto",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/auth/status"
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"status\": \"Firebase Admin SDK inicializado correctamente\",\n    \"initialized\": true,\n    \"projectId\": \"ferremas-v2\",\n    \"environment\": \"development\",\n    \"auth\": {\n      \"status\": \"Funcional\"\n    },\n    \"database\": {\n      \"configured\": true,\n      \"status\": \"Conectado\"\n    },\n    \"config\": {\n      \"hasProjectId\": true,\n      \"hasClientEmail\": true,\n      \"hasPrivateKey\": true,\n      \"hasDatabaseUrl\": true\n    }\n  },\n  \"message\": \"Estado de Firebase obtenido exitosamente\"\n}"
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Health Check",
       "item": [
@@ -12,7 +616,7 @@
           "name": "Base endpoint",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/",
+            "url": "{{base_url}}/",
             "description": "Endpoint base que confirma que el servidor está funcionando"
           }
         },
@@ -20,7 +624,7 @@
           "name": "Health check",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/health",
+            "url": "{{base_url}}/health",
             "description": "Verifica el estado del servidor y la conexión a la base de datos"
           }
         }
@@ -33,7 +637,7 @@
           "name": "Listar productos",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/productos",
+            "url": "{{base_url}}/productos",
             "description": "Obtiene todos los productos disponibles"
           }
         },
@@ -41,7 +645,7 @@
           "name": "Obtener producto por ID",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/productos/{{producto_id}}",
+            "url": "{{base_url}}/productos/{{test_product_id}}",
             "description": "Obtiene un producto específico por su ID"
           }
         },
@@ -49,7 +653,7 @@
           "name": "Crear producto",
           "request": {
             "method": "POST",
-            "url": "http://localhost:3000/productos",
+            "url": "{{base_url}}/productos",
             "header": [
               {
                 "key": "Content-Type",
@@ -68,7 +672,7 @@
           "name": "Actualizar producto",
           "request": {
             "method": "PUT",
-            "url": "http://localhost:3000/productos/{{producto_id}}",
+            "url": "{{base_url}}/productos/{{test_product_id}}",
             "header": [
               {
                 "key": "Content-Type",
@@ -87,7 +691,7 @@
           "name": "Eliminar producto",
           "request": {
             "method": "DELETE",
-            "url": "http://localhost:3000/productos/{{producto_id}}",
+            "url": "{{base_url}}/productos/{{test_product_id}}",
             "description": "Elimina un producto del sistema"
           }
         },
@@ -95,7 +699,7 @@
           "name": "Obtener productos por categoría",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/productos/categoria/{{categoria}}",
+            "url": "{{base_url}}/productos/categoria/{{categoria}}",
             "description": "Obtiene todos los productos de una categoría específica"
           }
         }
@@ -108,19 +712,29 @@
           "name": "Obtener usuario",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/usuarios/{{usuario_id}}",
-            "description": "Obtiene los datos de un usuario específico"
+            "url": "{{base_url}}/usuarios/{{test_user_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene los datos de un usuario específico (requiere autenticación con Firebase)"
           }
         },
         {
           "name": "Crear usuario",
           "request": {
             "method": "POST",
-            "url": "http://localhost:3000/usuarios",
+            "url": "{{base_url}}/usuarios",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
@@ -135,11 +749,15 @@
           "name": "Actualizar usuario",
           "request": {
             "method": "PUT",
-            "url": "http://localhost:3000/usuarios/{{usuario_id}}",
+            "url": "{{base_url}}/usuarios/{{test_user_id}}",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
@@ -154,75 +772,150 @@
           "name": "Eliminar usuario",
           "request": {
             "method": "DELETE",
-            "url": "http://localhost:3000/usuarios/{{usuario_id}}",
-            "description": "Elimina un usuario del sistema"
+            "url": "{{base_url}}/usuarios/{{test_user_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Elimina un usuario del sistema (requiere autenticación con Firebase)"
           }
         }
       ]
     },
     {
       "name": "Pedidos",
+      "description": "Gestión de pedidos - Incluye creación, consulta y seguimiento del estado de los pedidos",
       "item": [
         {
           "name": "Obtener pedido por ID",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/pedidos/{{pedido_id}}",
-            "description": "Obtiene los detalles de un pedido específico"
-          }
+            "url": "{{base_url}}/pedidos/{{pedido_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene los detalles completos de un pedido específico, incluyendo información del producto, usuario y estado de pago (requiere autenticación con Firebase)"
+          },
+          "response": [
+            {
+              "name": "Ejemplo respuesta exitosa",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/pedidos/123"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 123,\n    \"producto_id\": 34,\n    \"usuario_id\": 9,\n    \"cantidad\": 2,\n    \"estado\": \"en_proceso\",\n    \"fecha_pedido\": \"2023-11-25T12:00:00Z\",\n    \"monto\": 179980,\n    \"producto_nombre\": \"Sierra Circular DeWalt\",\n    \"usuario_nombre\": \"Carlos Rodríguez\",\n    \"transbank_token\": \"01ab2cd3\",\n    \"transbank_status\": \"INITIALIZED\",\n    \"buy_order\": \"ORD-123-4567\"\n  },\n  \"message\": \"Pedido obtenido exitosamente\"\n}"
+            }
+          ]
         },
         {
           "name": "Obtener pedidos por usuario",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/pedidos/usuario/{{usuario_id}}",
-            "description": "Obtiene todos los pedidos de un usuario específico"
-          }
+            "url": "{{base_url}}/pedidos/usuario/{{test_user_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Obtiene todos los pedidos de un usuario específico (requiere autenticación con Firebase)"
+          },
+          "response": [
+            {
+              "name": "Ejemplo respuesta exitosa",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 123,\n      \"producto_id\": 34,\n      \"usuario_id\": 9,\n      \"cantidad\": 2,\n      \"estado\": \"pagado\",\n      \"fecha_pedido\": \"2023-11-25T12:00:00Z\",\n      \"monto\": 179980,\n      \"producto_nombre\": \"Sierra Circular DeWalt\",\n      \"usuario_nombre\": \"Carlos Rodríguez\",\n      \"transbank_token\": \"01ab2cd3\",\n      \"transbank_status\": \"AUTHORIZED\",\n      \"buy_order\": \"ORD-123-4567\"\n    }\n  ],\n  \"message\": \"Pedidos del usuario obtenidos exitosamente\"\n}"
+            }
+          ]
         },
         {
           "name": "Crear pedido",
           "request": {
             "method": "POST",
-            "url": "http://localhost:3000/pedidos",
+            "url": "{{base_url}}/pedidos",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"producto_id\": 34,\n  \"usuario_id\": 9,\n  \"cantidad\": 1,\n  \"estado\": \"pendiente\"\n}",
-              "description": "Datos del nuevo pedido"
+              "raw": "{\n  \"producto_id\": {{test_product_id}},\n  \"usuario_id\": {{test_user_id}},\n  \"cantidad\": 2,\n  \"estado\": \"pendiente\",\n  \"fecha_pedido\": \"{{$isoTimestamp}}\"\n}",
+              "description": "Datos del nuevo pedido. El monto se calcula automáticamente basado en el precio del producto × cantidad"
             },
-            "description": "Crea un nuevo pedido en el sistema"
-          }
+            "description": "Crea un nuevo pedido en el sistema. El monto se calcula automáticamente."
+          },
+          "response": [
+            {
+              "name": "Ejemplo respuesta exitosa",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/pedidos",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"producto_id\": 34,\n  \"usuario_id\": 9,\n  \"cantidad\": 2\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 123,\n    \"producto_id\": 34,\n    \"usuario_id\": 9,\n    \"cantidad\": 2,\n    \"estado\": \"pendiente\",\n    \"fecha_pedido\": \"2023-11-25T12:00:00Z\",\n    \"monto\": 179980,\n    \"producto_nombre\": \"Sierra Circular DeWalt\",\n    \"usuario_nombre\": \"Carlos Rodríguez\"\n  },\n  \"message\": \"Pedido creado exitosamente\"\n}"
+            }
+          ]
         },
         {
           "name": "Actualizar pedido",
           "request": {
             "method": "PUT",
-            "url": "http://localhost:3000/pedidos/{{pedido_id}}",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estado\": \"completado\"\n}",
+              "raw": "{\n  \"producto_id\": {{test_product_id}},\n  \"usuario_id\": {{test_user_id}},\n  \"cantidad\": 1,\n  \"estado\": \"en_proceso\",\n  \"fecha_pedido\": \"{{$isoTimestamp}}\",\n  \"monto\": 89990,\n  \"transbank_token\": null,\n  \"transbank_status\": null,\n  \"buy_order\": null\n}",
               "description": "Datos actualizados del pedido"
             },
-            "description": "Actualiza el estado u otros datos de un pedido existente"
+            "description": "Actualiza el estado u otros datos de un pedido existente. Estados válidos: pendiente, en_proceso, pagado, rechazado, error. Se deben incluir todos los campos requeridos por el validador."
           }
         },
         {
           "name": "Eliminar pedido",
           "request": {
             "method": "DELETE",
-            "url": "http://localhost:3000/pedidos/{{pedido_id}}",
-            "description": "Elimina un pedido del sistema"
+            "url": "{{base_url}}/pedidos/{{pedido_id}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_id_token}}"
+              }
+            ],
+            "description": "Elimina un pedido del sistema (requiere autenticación con Firebase)"
           }
         }
       ]
@@ -234,7 +927,7 @@
           "name": "Listar mensajes",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/contacto",
+            "url": "{{base_url}}/contacto",
             "description": "Obtiene todos los mensajes de contacto"
           }
         },
@@ -242,7 +935,7 @@
           "name": "Obtener mensaje",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/contacto/{{mensaje_id}}",
+            "url": "{{base_url}}/contacto/{{mensaje_id}}",
             "description": "Obtiene un mensaje de contacto específico"
           }
         },
@@ -250,7 +943,7 @@
           "name": "Crear mensaje",
           "request": {
             "method": "POST",
-            "url": "http://localhost:3000/contacto",
+            "url": "{{base_url}}/contacto",
             "header": [
               {
                 "key": "Content-Type",
@@ -269,7 +962,7 @@
           "name": "Eliminar mensaje",
           "request": {
             "method": "DELETE",
-            "url": "http://localhost:3000/contacto/{{mensaje_id}}",
+            "url": "{{base_url}}/contacto/{{mensaje_id}}",
             "description": "Elimina un mensaje de contacto"
           }
         }
@@ -277,12 +970,13 @@
     },
     {
       "name": "Webpay",
+      "description": "Flujo de pago con Webpay - Desde la creación de la transacción hasta la confirmación del pago",
       "item": [
         {
           "name": "Crear transacción",
           "request": {
             "method": "POST",
-            "url": "http://localhost:3000/api/webpay/crear-transaccion",
+            "url": "{{base_url}}/api/webpay/crear-transaccion",
             "header": [
               {
                 "key": "Content-Type",
@@ -294,14 +988,28 @@
               "raw": "{\n  \"pedido_id\": {{pedido_id}}\n}",
               "description": "ID del pedido para procesar el pago"
             },
-            "description": "Inicia una transacción de pago con Webpay para un pedido específico"
-          }
+            "description": "Inicia una transacción de pago con Webpay. Retorna un formulario HTML que redirige al usuario a Webpay. El pedido debe tener un monto válido."
+          },
+          "response": [
+            {
+              "name": "Ejemplo respuesta exitosa",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/html; charset=utf-8"
+                }
+              ],
+              "body": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Procesando Pago - Ferremas</title>\n    <!-- ... Contenido HTML del formulario de redirección ... -->\n</head>\n<body>\n    <form id=\"webpay-form\" method=\"POST\" action=\"https://webpay3gint.transbank.cl/...\">\n        <input type=\"hidden\" name=\"token_ws\" value=\"01ab2cd3\" />\n    </form>\n    <script>\n        document.getElementById('webpay-form').submit();\n    </script>\n</body>\n</html>"
+            }
+          ]
         },
         {
-          "name": "Retorno de pago",
+          "name": "Retorno de pago (POST)",
           "request": {
             "method": "POST",
-            "url": "http://localhost:3000/api/webpay/retorno",
+            "url": "{{base_url}}/api/webpay/retorno",
             "header": [
               {
                 "key": "Content-Type",
@@ -313,40 +1021,85 @@
               "urlencoded": [
                 {
                   "key": "token_ws",
-                  "value": "{{token_ws}}",
-                  "description": "Token de la transacción"
+                  "value": "{{transbank_token}}",
+                  "description": "Token de la transacción proporcionado por Webpay"
                 }
               ]
             },
-            "description": "URL de retorno después del proceso de pago"
-          }
+            "description": "URL de retorno después del proceso de pago. Webpay redirige aquí con el resultado de la transacción."
+          },
+          "response": [
+            {
+              "name": "Ejemplo pago exitoso",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/html; charset=utf-8"
+                }
+              ],
+              "body": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Pago Exitoso - Ferremas</title>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>¡Pago Exitoso!</h1>\n        <p>Tu pago ha sido procesado correctamente</p>\n        <div class=\"details\">\n            <p><strong>Orden:</strong> ORD-123-4567</p>\n            <p><strong>Monto:</strong> $179.980</p>\n            <p><strong>Estado:</strong> Autorizado</p>\n        </div>\n    </div>\n</body>\n</html>"
+            },
+            {
+              "name": "Ejemplo pago rechazado",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/html; charset=utf-8"
+                }
+              ],
+              "body": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Pago No Autorizado - Ferremas</title>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Pago No Autorizado</h1>\n        <p>La transacción fue procesada pero no fue autorizada.</p>\n        <div class=\"details\">\n            <p><strong>Orden:</strong> ORD-123-4567</p>\n            <p><strong>Estado:</strong> REJECTED</p>\n        </div>\n    </div>\n</body>\n</html>"
+            }
+          ]
         },
         {
-          "name": "Página final",
+          "name": "Página final (GET)",
           "request": {
             "method": "GET",
-            "url": "http://localhost:3000/api/webpay/retorno",
+            "url": "{{base_url}}/api/webpay/retorno",
             "description": "Página final mostrada después del proceso de pago"
-          }
+          },
+          "response": [
+            {
+              "name": "Ejemplo respuesta",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/html; charset=utf-8"
+                }
+              ],
+              "body": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Confirmación - Ferremas</title>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Pago Procesado</h1>\n        <p>Gracias por tu compra. Tu pedido ha sido registrado correctamente.</p>\n        <p>Estado: Completado</p>\n        <p>Fecha: {{$timestamp}}</p>\n    </div>\n</body>\n</html>"
+            }
+          ]
         }
       ]
     }
   ],
   "variable": [
     {
-      "key": "producto_id",
-      "value": "34",
-      "description": "ID del producto de ejemplo"
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "description": "URL base del servidor en desarrollo"
     },
     {
-      "key": "usuario_id",
+      "key": "test_product_id",
+      "value": "34",
+      "description": "ID de producto de prueba (Sierra Circular DeWalt)"
+    },
+    {
+      "key": "test_user_id",
       "value": "9",
-      "description": "ID del usuario de ejemplo"
+      "description": "ID de usuario de prueba (Carlos Rodríguez)"
     },
     {
       "key": "pedido_id",
-      "value": "7",
-      "description": "ID del pedido de ejemplo"
+      "value": "123",
+      "description": "ID de pedido de ejemplo"
     },
     {
       "key": "mensaje_id",
@@ -359,9 +1112,24 @@
       "description": "Nombre de la categoría de ejemplo"
     },
     {
-      "key": "token_ws",
+      "key": "transbank_token",
+      "value": "01ab2cd3",
+      "description": "Token de ejemplo de Webpay"
+    },
+    {
+      "key": "firebase_id_token",
       "value": "",
-      "description": "Token de transacción Webpay"
+      "description": "Token de ID de Firebase para autenticación (se actualiza automáticamente)"
+    },
+    {
+      "key": "test_user_email",
+      "value": "test@example.com",
+      "description": "Email de usuario de prueba para autenticación con Firebase"
+    },
+    {
+      "key": "test_user_password",
+      "value": "password123",
+      "description": "Contraseña de usuario de prueba para autenticación con Firebase"
     }
   ]
 }

@@ -14,7 +14,7 @@ const options = new Options(
 // URL de retorno basada en el ambiente
 const BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://tu-dominio-produccion.com'
-  : 'http://localhost:3000';
+  : 'http://localhost:8000';
 
 // Función auxiliar para actualizar el pedido con datos de Transbank
 async function actualizarPedido(id, datos) {
@@ -42,7 +42,7 @@ async function actualizarPedido(id, datos) {
 }
 
 // Función para generar respuestas HTML consistentes
-function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, redireccion = null, segundosRedireccion = 3 }) {
+function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, redireccion = null, segundosRedireccion = 3, redireccionHtml = null }) {
   const colorTitulo = esExito ? '#28a745' : '#dc3545';
   const icono = esExito ? '✅' : '❌';
   
@@ -55,9 +55,13 @@ function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, 
     `;
   }
   
-  let redireccionHtml = '';
-  if (redireccion) {
-    redireccionHtml = `
+  let redirHtml = '';
+  if (redireccionHtml) {
+    // Usar el HTML personalizado para redirección si se proporciona
+    redirHtml = redireccionHtml;
+  } else if (redireccion) {
+    // Usar la redirección estándar si se proporciona una URL
+    redirHtml = `
       <p class="loading">Redirigiendo en ${segundosRedireccion} segundos...</p>
       <script>
         setTimeout(function() {
@@ -177,7 +181,7 @@ function generarHtmlRespuesta({ titulo, mensaje, detalles = [], esExito = true, 
         </div>
         <p class="message">${mensaje}</p>
         ${detallesHtml}
-        ${redireccionHtml}
+        ${redirHtml}
     </div>
 </body>
 </html>`;
@@ -206,7 +210,7 @@ router.post('/crear-transaccion', async (req, res) => {
 
       // Verificar si ya tiene un token activo
       if (pedido.transbank_token && pedido.transbank_status === 'INICIADA') {
-        console.log('[Webpay] Pedido ya tiene una transacción iniciada, reutilizando token existente');
+        console.log('[Webpay] Pedido ya tiene una transacción iniciada, verificando estado del token existente');
         
         // Buscar si la transacción sigue activa en Transbank
         try {
@@ -214,25 +218,78 @@ router.post('/crear-transaccion', async (req, res) => {
           const statusResponse = await transaction.status(pedido.transbank_token);
           console.log('[Webpay] Estado de transacción existente:', statusResponse);
           
-          // Si la transacción está vigente, redirigir al usuario para continuar
-          const html = generarHtmlRespuesta({
-            titulo: 'Retomando Pago',
-            mensaje: 'Hemos detectado un pago en proceso para este pedido. Serás redirigido para completarlo.',
-            detalles: [
-              { etiqueta: 'Orden', valor: pedido.buy_order },
-              { etiqueta: 'Monto', valor: new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(pedido.monto) },
-              { etiqueta: 'Estado', valor: 'Pago en proceso' }
-            ],
-            esExito: true,
-            redireccion: statusResponse.url,
-            segundosRedireccion: 2
-          });
+          // Verificar si el token sigue siendo válido basado en su estado
+          const validTokenStatuses = ['INITIALIZED', 'CREATED'];
+          const isTokenValid = validTokenStatuses.includes(statusResponse.status);
           
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          return res.send(html);
+          if (isTokenValid && statusResponse.url) {
+            console.log('[Webpay] Token existente válido, redirigiendo al usuario');
+            
+            // Actualizamos el estado del pedido para indicar que se está retomando el pago
+            await actualizarPedido(pedido_id, {
+              token: pedido.transbank_token,
+              status: 'RETOMADA',
+              nuevoEstado: 'en_proceso'
+            });
+            
+            // Si la transacción está vigente, redirigir inmediatamente al usuario
+            const redirectHtml = generarHtmlRespuesta({
+              titulo: 'Retomando Pago',
+              mensaje: 'Hemos detectado un pago en proceso para este pedido. Serás redirigido automáticamente.',
+              detalles: [
+                { etiqueta: 'Orden', valor: pedido.buy_order || 'ORD-' + pedido_id },
+                { etiqueta: 'Estado', valor: 'Pago en proceso' },
+                { etiqueta: 'Acción', valor: 'Redirección automática a Webpay' }
+              ],
+              esExito: true,
+              redireccionHtml: `
+                <form id="redirectForm" action="${statusResponse.url}" method="POST" style="display:none;">
+                  <input type="hidden" name="token_ws" value="${pedido.transbank_token}" />
+                </form>
+                <script>
+                  // Registrar evento en consola
+                  console.log('Redirigiendo a Webpay con token existente');
+                  
+                  // Enviar formulario automáticamente después de 2 segundos
+                  setTimeout(function() {
+                    document.getElementById('redirectForm').submit();
+                    console.log('Formulario enviado');
+                  }, 2000);
+                </script>
+              `
+            });
+            
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            return res.send(redirectHtml);
+          } else {
+            // El token existe pero no está en un estado válido para continuar
+            console.log('[Webpay] Token existente no válido o expirado:', statusResponse.status);
+            
+            // Actualizar el pedido para indicar que el token expiró
+            await actualizarPedido(pedido_id, {
+              status: 'EXPIRADA',
+              nuevoEstado: 'pendiente'
+            });
+            
+            console.log('[Webpay] Estado de pedido actualizado a EXPIRADA, se creará un nuevo token');
+          }
         } catch (tokenError) {
-          console.log('[Webpay] Error al verificar token existente, creando nueva transacción:', tokenError);
-          // Si hay error, asumimos que el token expiró y creamos uno nuevo
+          console.error('[Webpay] Error al verificar token existente:', tokenError);
+          
+          // Registramos el error específico para mejor diagnóstico
+          if (tokenError.message.includes('not found') || tokenError.message.includes('no encontrada')) {
+            console.log('[Webpay] El token ya no existe en Transbank, se creará uno nuevo');
+          } else if (tokenError.message.includes('timeout') || tokenError.message.includes('tiempo de espera')) {
+            console.log('[Webpay] Tiempo de espera agotado al verificar token, se creará uno nuevo');
+          } else {
+            console.log('[Webpay] Error desconocido al verificar token, se creará uno nuevo:', tokenError.message);
+          }
+          
+          // Actualizar el pedido para indicar que hubo un error con el token
+          await actualizarPedido(pedido_id, {
+            status: 'ERROR_TOKEN',
+            nuevoEstado: 'pendiente'
+          });
         }
       }
 
@@ -240,7 +297,13 @@ router.post('/crear-transaccion', async (req, res) => {
       const sessionId = 'SES-' + pedido_id;
       const returnUrl = `${BASE_URL}/api/webpay/retorno`;
 
-      console.log('[Webpay] Iniciando transacción:', { buyOrder, sessionId, monto: pedido.monto, returnUrl });
+      console.log('[Webpay] Iniciando nueva transacción:', { buyOrder, sessionId, monto: pedido.monto, returnUrl });
+      
+      // Actualizamos el estado del pedido antes de iniciar la transacción
+      await actualizarPedido(pedido_id, {
+        status: 'PREPARANDO',
+        nuevoEstado: 'pendiente'
+      });
 
       const transaction = new WebpayPlus.Transaction(options);
       const response = await transaction.create(buyOrder, sessionId, pedido.monto, returnUrl);
@@ -251,10 +314,11 @@ router.post('/crear-transaccion', async (req, res) => {
       const pedidoActualizado = await actualizarPedido(pedido_id, {
         token: response.token,
         status: 'INICIADA',
-        buyOrder: buyOrder
+        buyOrder: buyOrder,
+        nuevoEstado: 'en_proceso'
       });
 
-      console.log('[Webpay] Pedido actualizado:', pedidoActualizado);
+      console.log('[Webpay] Pedido actualizado con nuevo token:', pedidoActualizado);
 
       // Formatear el monto para mostrar
       const montoFormateado = new Intl.NumberFormat('es-CL', {
@@ -429,13 +493,42 @@ router.post('/crear-transaccion', async (req, res) => {
     } catch (error) {
       console.error('[Webpay] Error al crear transacción:', error);
       
+      // Obtener un mensaje de error más amigable basado en el tipo de error
+      let mensajeError = 'Ha ocurrido un error al intentar iniciar el proceso de pago.';
+      let detalleError = error.message || 'Error desconocido';
+      
+      if (error.message.includes('timeout') || error.message.includes('tiempo')) {
+        mensajeError = 'La comunicación con el servidor de pagos ha tardado demasiado.';
+        detalleError = 'Error de tiempo de espera';
+      } else if (error.message.includes('network') || error.message.includes('red')) {
+        mensajeError = 'Hubo un problema de red al comunicarse con el servidor de pagos.';
+        detalleError = 'Error de red';
+      } else if (error.message.includes('token')) {
+        mensajeError = 'Hubo un problema con la validación del pago.';
+        detalleError = 'Error de validación de token';
+      }
+      
+      // Actualizar el pedido con el estado de error si es posible
+      if (pedido_id) {
+        try {
+          await actualizarPedido(pedido_id, {
+            status: 'ERROR_CREACION',
+            nuevoEstado: 'error'
+          });
+          console.log('[Webpay] Pedido marcado con estado de error:', pedido_id);
+        } catch (updateError) {
+          console.error('[Webpay] Error adicional al intentar actualizar estado de error:', updateError);
+        }
+      }
+      
       // HTML para error
       const htmlError = generarHtmlRespuesta({
         titulo: 'Error al Procesar Pago',
-        mensaje: 'Ha ocurrido un error al intentar iniciar el proceso de pago.',
+        mensaje: mensajeError,
         detalles: [
-          { etiqueta: 'Error', valor: error.message || 'Error desconocido' },
-          { etiqueta: 'Código', valor: error.code || 'N/A' }
+          { etiqueta: 'Detalle', valor: detalleError },
+          { etiqueta: 'Código', valor: error.code || 'N/A' },
+          { etiqueta: 'Acción recomendada', valor: 'Intente nuevamente en unos minutos' }
         ],
         esExito: false,
         redireccion: `${BASE_URL}`,
@@ -568,17 +661,18 @@ router.post('/retorno', async (req, res) => {
     // Generar respuesta HTML según estado de la transacción
     if (result.status === 'AUTHORIZED') {
       const htmlExito = generarHtmlRespuesta({
-        titulo: 'Pago Exitoso',
-        mensaje: '¡Tu pago ha sido procesado correctamente!',
+        titulo: '¡Pago Exitoso!',
+        mensaje: '¡Tu pago ha sido procesado correctamente! Estamos preparando tu pedido.',
         detalles: [
           { etiqueta: 'Orden', valor: result.buyOrder },
           { etiqueta: 'Monto pagado', valor: montoFormateado },
           { etiqueta: 'Estado', valor: 'Autorizado' },
-          { etiqueta: 'Fecha', valor: new Date().toLocaleString('es-CL') }
+          { etiqueta: 'Fecha', valor: new Date().toLocaleString('es-CL') },
+          { etiqueta: 'Transacción', valor: token.substring(0, 8) + '...' }
         ],
         esExito: true,
         redireccion: `${BASE_URL}/api/webpay/retorno`,
-        segundosRedireccion: 3
+        segundosRedireccion: 8
       });
       
       return res.status(200).send(htmlExito);
@@ -653,16 +747,186 @@ router.post('/retorno', async (req, res) => {
 
 // 3. Ruta GET para mostrar después del pago (pantalla final)
 router.get('/retorno', (req, res) => {
-  // Usar el generador de HTML para la página final
-  const htmlFinal = generarHtmlRespuesta({
-    titulo: 'Pago Procesado',
-    mensaje: 'Gracias por tu compra. Tu pedido ha sido registrado correctamente.',
-    detalles: [
-      { etiqueta: 'Estado', valor: 'Completado' },
-      { etiqueta: 'Fecha', valor: new Date().toLocaleString('es-CL') }
-    ],
-    esExito: true
-  });
+  // Usar el generador de HTML para la página final con diseño mejorado
+  const htmlFinal = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Completado - Ferremas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        }
+        .container {
+            background-color: white;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 650px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .container:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #28a745, #34d058);
+        }
+        .header {
+            margin-bottom: 2.5rem;
+        }
+        .header h1 {
+            color: #28a745;
+            margin-bottom: 1rem;
+            font-size: 2.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header h1:before {
+            content: "✅";
+            margin-right: 15px;
+            font-size: 2.6rem;
+        }
+        .success-animation {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .success-animation:before {
+            content: "✓";
+            font-size: 60px;
+            color: #28a745;
+            font-weight: bold;
+        }
+        .success-animation:after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid #28a745;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+        .details {
+            margin: 2rem 0;
+            text-align: left;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            border-left: 5px solid #28a745;
+        }
+        .details p {
+            margin: 0.8rem 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        .message {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #4a5568;
+            margin-bottom: 2rem;
+        }
+        .button {
+            background-color: #28a745;
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .footer {
+            margin-top: 2.5rem;
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        .footer p {
+            margin: 0.5rem 0;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .details p {
+                font-size: 1.1rem;
+            }
+            .button {
+                padding: 14px 28px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-animation"></div>
+        <div class="header">
+            <h1>¡Pago Completado!</h1>
+        </div>
+        <p class="message">Gracias por tu compra. Tu pedido ha sido registrado correctamente y está siendo procesado.</p>
+        <div class="details">
+            <p><strong>Estado:</strong> Completado</p>
+            <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-CL')}</p>
+            <p><strong>Referencia:</strong> ${Date.now().toString().substring(8)}</p>
+        </div>
+        <a href="${BASE_URL}" class="button">Volver a la Tienda</a>
+        <div class="footer">
+            <p>Se ha enviado un correo de confirmación con los detalles de tu compra.</p>
+            <p>Si tienes alguna pregunta, contáctanos a nuestro servicio al cliente.</p>
+        </div>
+    </div>
+</body>
+</html>`;
   
   res.status(200).send(htmlFinal);
 });

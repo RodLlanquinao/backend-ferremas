@@ -1,160 +1,171 @@
-# FERREMAS Backend API
+# FERREMAS Backend API v2.0
+## Instituto Profesional DuocUC - Escuela de Informática
 
-[![Railway Deployment](https://railway.app/button.svg)](https://railway.app/project/ferremas-backend)
+![DuocUC](https://img.shields.io/badge/DuocUC-Integración%20de%20Plataformas-orange)
+![Evaluación](https://img.shields.io/badge/Evaluación-EV2-orange)
+
+### Equipo de Desarrollo
+- **Felipe López**
+- **Rodrigo Llanquinao** 
+- **Alex Cayuqueo** 
+
 
 ![Node.js](https://img.shields.io/badge/Node.js-v16.13.1-green)
 ![Express.js](https://img.shields.io/badge/Express.js-v4.17.1-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v14.1-orange)
+![Firebase](https://img.shields.io/badge/Firebase-Authentication-yellow)
 ![CORS](https://img.shields.io/badge/CORS-enabled-yellow)
 ![SSL](https://img.shields.io/badge/SSL-enabled-purple)
+![Transbank](https://img.shields.io/badge/Transbank-integrated-red)
+![Webpay](https://img.shields.io/badge/Webpay%20Plus-v6.0.0-brightgreen)
 
-## Descripción del Proyecto
+# 🎯 Estado del Proyecto: LISTO PARA EVALUACIÓN EV2
 
-FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos y mensajes de contacto, utilizando PostgreSQL como base de datos. La aplicación está desplegada en Railway y utiliza PostgreSQL como base de datos.
+Este proyecto está completamente preparado para su evaluación académica. Incluye:
 
-## 🚀 Despliegue en Railway
+- ✅ Sistema de pedidos completamente funcional
+- ✅ Autenticación con Firebase implementada
+- ✅ Integración con Webpay implementada y probada
+- ✅ Colección de Postman actualizada con pruebas de Firebase
+- ✅ Variables de entorno incluidas (ambiente académico controlado)
+- ✅ Documentación completa y actualizada
 
-### URL de Producción
+## ℹ️ Nota Importante
+
+Este proyecto está configurado específicamente para una evaluación académica en un ambiente controlado. Por esta razón:
+
+- El archivo `.env` está incluido en el repositorio
+- Las credenciales de Webpay son de prueba (ambiente de integración)
+- La configuración está optimizada para desarrollo local
+- El acceso está limitado al equipo evaluador
+
+Esta configuración no sigue las prácticas de seguridad estándar para un ambiente de producción, ya que su propósito es académico y de evaluación dentro del contexto del Instituto Profesional DuocUC.
+
+## 🗺️ Descripción del Proyecto
+
+FERREMAS Backend es una API REST desarrollada en Node.js y Express.js para gestionar un sistema de ferretería con autenticación y procesamiento de pagos integrado. La aplicación proporciona endpoints para manejar productos, usuarios, pedidos, mensajes de contacto, autenticación con Firebase y procesamiento de pagos con Webpay de Transbank, utilizando PostgreSQL como base de datos.
+
+### URL de Desarrollo
 ```
-http://localhost:3000
+http://localhost:8000
 ```
-### Documentación de la API
-
-### Configuración Automática
-
-El proyecto está configurado para desplegarse automáticamente en Railway con:
-
-- ✅ **Contenedor Docker**: Despliegue en contenedor para mejor rendimiento
-- ✅ **Base de Datos PostgreSQL**: Integración automática con PostgreSQL de Railway
-- ✅ **Variables de Entorno**: Configuración automática desde Railway
-- ✅ **CORS**: Configurado para permitir peticiones desde cualquier origen
-- ✅ **SSL**: Conexión segura a la base de datos
+### Documentación de la API 🚀
 
 ## Características Principales
 
+- ✅ **Autenticación con Firebase**: Sistema completo de registro, inicio de sesión y verificación de tokens
 - ✅ **Gestión de Productos**: CRUD completo para productos con categorías
-- ✅ **Gestión de Usuarios**: Administración de usuarios con roles
-- ✅ **Sistema de Pedidos**: Creación y gestión de pedidos
+- ✅ **Gestión de Usuarios**: Administración de usuarios con roles e integración con Firebase
+- ✅ **Sistema de Pedidos**: Creación y gestión de pedidos con autenticación
 - ✅ **Formulario de Contacto**: Recepción y almacenamiento de mensajes
+- ✅ **Procesamiento de Pagos**: Integración completa con Webpay Plus de Transbank
 - ✅ **Base de Datos PostgreSQL**: Conexión segura con SSL
 - ✅ **Arquitectura MVC**: Separación clara de responsabilidades
+- ✅ **Scripts de Prueba**: Herramientas multiplataforma para probar pagos y autenticación
 
 ## 📁 Estructura del Proyecto
 
 ```
-backendferremas/
+backend-ferremas/
 ├── config/
 │   ├── database.js          # Configuración de PostgreSQL DB
-│   └── environment.js       # Variables de entorno
+│   ├── environment.js       # Variables de entorno
+│   └── firebase.js          # Configuración de Firebase Authentication
 ├── controllers/
 │   ├── productosController.js
 │   ├── usuariosController.js
 │   ├── pedidosController.js
 │   └── contactoController.js
 ├── middleware/
+│   ├── authMiddleware.js    # Middleware de autenticación con Firebase
 │   ├── errorHandler.js      # Manejo de errores
 │   └── validation.js        # Validaciones
 ├── models/
 │   ├── Producto.js
-│   ├── Usuario.js
+│   ├── Usuario.js           # Actualizado con soporte para Firebase
 │   ├── Pedido.js
 │   └── Contacto.js
 ├── routes/
+│   ├── auth.routes.js       # Rutas de autenticación con Firebase
 │   ├── productos.routes.js
 │   ├── usuarios.routes.js
 │   ├── pedidos.routes.js
-│   └── contacto.routes.js
+│   ├── contacto.routes.js
+│   └── webpay.routes.js     # Rutas para procesamiento de pagos
 ├── utils/
 │   └── responseHelper.js    # Helpers para respuestas
+├── scripts/
+│   ├── test-db.js           # Pruebas de conexión a BD
+│   └── migrate.js           # Script para ejecutar migraciones
+├── migrations/
+│   └── 01_add_firebase_auth_columns.sql # Migración para Firebase
+├── webpay-test.js           # Script multiplataforma para pruebas de pago
+├── webpay-test.sh           # Script bash para pruebas de pago
 ├── docs/
-│   ├── API.md              # Documentación de la API
-│   └── POSTMAN_GUIDE.md    # Guía de Postman
+│   ├── API.md               # Documentación de la API
+│   └── POSTMAN_GUIDE.md     # Guía de Postman actualizada con Firebase
 └── package.json
-\`\`\`
+```
 
-## 🔧 Configuración Local
+## 🔧 Configuración y Ejecución
 
-### Desarrollo Local
-
-1. **Clonar y configurar**
+1. **Clonar el repositorio**
    ```bash
    git clone <repository-url>
-   cd backendferremas
-   npm install
+   cd backend-ferremas
    ```
 
-1. **Configurar variables de entorno**
-   Crea un archivo `.env` con las siguientes variables:
-   ```
-   PORT=3000
-   NODE_ENV=development
-   DATABASE_URL=tu_url_de_postgresql
-   CORS_ORIGIN=*
-   ```
-
-2. **Ejecutar en desarrollo**
+2. **Instalar dependencias**
    ```bash
-   npm run dev
+   pnpm install
    ```
 
-### Despliegue en Railway
+3. **Variables de entorno**
+   El archivo `.env` ya está incluido en el proyecto con todas las configuraciones necesarias para el ambiente de evaluación académica, incluyendo las configuraciones de Firebase Authentication y Transbank.
 
-1. **Instalar Railway CLI** (opcional)
+4. **Iniciar el servidor**
    ```bash
-   npm i -g @railway/cli
+   node index.js
    ```
 
-2. **Iniciar sesión en Railway**
-   ```bash
-   railway login
-   ```
-
-3. **Vincular proyecto existente**
-   ```bash
-   railway link
-   ```
-
-4. **Desplegar a Railway**
-   ```bash
-   railway up
-   ```
-
-5. **Configurar variables de entorno en Railway** (también se puede hacer desde el dashboard)
-   ```bash
-   railway variables set KEY=VALUE
-   ```
+El servidor estará disponible en http://localhost:8000
 
 ## Requisitos Previos
 
 - Node.js (v14 o superior)
 - PostgreSQL
-- npm o yarn
+- npm, yarn o pnpm
+- Proyecto Firebase (configuración incluida en .env)
 
 ## 🗄️ Base de Datos
 
-### Configuración Automática
+### Configuración Local
+La base de datos PostgreSQL debe estar configurada localmente con las credenciales especificadas en el archivo `.env` incluido en el proyecto.
 
-La base de datos está configurada automáticamente a través de la integración de PostgreSQL en Railway:
-
-- **Host**: Proporcionado por Railway
-- **SSL**: Habilitado automáticamente
-- **Pool de Conexiones**: Optimizado para contenedores
-- **Variables**: Configuradas automáticamente
-
-### Tablas Creadas
+### Tablas Disponibles
 
 Las siguientes tablas están disponibles en la base de datos:
 
-- ✅ \`productos\` - Catálogo de productos
-- ✅ \`usuarios\` - Gestión de usuarios
-- ✅ \`pedidos\` - Sistema de pedidos
-- ✅ \`contactos\` - Mensajes de contacto
+- ✅ `productos` - Catálogo de productos
+- ✅ `usuarios` - Gestión de usuarios
+- ✅ `pedidos` - Sistema de pedidos (ahora con campos de pago)
+- ✅ `contactos` - Mensajes de contacto
 
-## 📡 Endpoints Disponibles
+### Campos adicionales para pagos
+
+La tabla `pedidos` ahora incluye los siguientes campos adicionales:
+
+- ✅ `monto` - Monto total del pedido
+- ✅ `transbank_token` - Token de la transacción generado por Webpay
+- ✅ `transbank_status` - Estado de la transacción (INICIADA, AUTHORIZED, FAILED, etc.)
+- ✅ `buy_order` - Número de orden de compra generado para Webpay
+
+## 🔌 Endpoints Disponibles
 
 ### Estado del Servidor
 - `GET /` - Información básica
 - `GET /health` - Estado de salud y DB
+- `GET /auth/status` - Estado de configuración de Firebase
 
 ### Productos
 - `GET /productos` - Obtener todos los productos
@@ -164,24 +175,36 @@ Las siguientes tablas están disponibles en la base de datos:
 - `PUT /productos/:id` - Actualizar producto
 - `DELETE /productos/:id` - Eliminar producto
 
+### Autenticación
+- `POST /auth/register` - Registrar nuevo usuario con Firebase
+- `POST /auth/login` - Iniciar sesión de usuario (información para cliente)
+- `POST /auth/verify-token` - Verificar token de Firebase
+- `GET /auth/me` - Obtener información del usuario autenticado
+- `GET /auth/status` - Verificar estado de configuración de Firebase
+
 ### Usuarios
-- `GET /usuarios/:id` - Obtener usuario por ID
-- `POST /usuarios` - Crear nuevo usuario
-- `PUT /usuarios/:id` - Actualizar usuario
-- `DELETE /usuarios/:id` - Eliminar usuario
+- `GET /usuarios/:id` - Obtener usuario por ID (requiere autenticación)
+- `POST /usuarios` - Crear nuevo usuario (requiere autenticación)
+- `PUT /usuarios/:id` - Actualizar usuario (requiere autenticación)
+- `DELETE /usuarios/:id` - Eliminar usuario (requiere autenticación)
 
 ### Pedidos
-- `GET /pedidos/:id` - Obtener pedido por ID
-- `GET /pedidos/usuario/:usuarioId` - Por usuario
-- `POST /pedidos` - Crear nuevo pedido
-- `PUT /pedidos/:id` - Actualizar pedido
-- `DELETE /pedidos/:id` - Eliminar pedido
+- `GET /pedidos/:id` - Obtener pedido por ID (requiere autenticación)
+- `GET /pedidos/usuario/:usuarioId` - Por usuario (requiere autenticación)
+- `POST /pedidos` - Crear nuevo pedido (requiere autenticación)
+- `PUT /pedidos/:id` - Actualizar pedido (requiere autenticación)
+- `DELETE /pedidos/:id` - Eliminar pedido (requiere autenticación)
 
 ### Contacto
 - `GET /contacto` - Obtener todos
 - `GET /contacto/:id` - Obtener por ID
 - `POST /contacto` - Crear mensaje
 - `DELETE /contacto/:id` - Eliminar
+
+### Procesamiento de Pagos (Nuevo)
+- `POST /webpay/crear-transaccion` - Iniciar proceso de pago
+- `POST /webpay/retorno` - Endpoint de retorno para Webpay
+- `GET  /webpay/retorno` - Página final después del pago
 
 ## 📋 Ejemplos de Respuestas
 
@@ -262,90 +285,132 @@ Todas las respuestas de la API siguen este formato estándar:
 }
 ```
 
-## 🧪 Pruebas
+## 🧪 Pruebas y Documentación
 
-### Verificar Estado
-```bash
-curl http://localhost:3000/health
+### Colección de Postman
+El proyecto incluye una colección completa de Postman (`postman_collection.json`) que contiene todos los endpoints disponibles, incluyendo la integración con Transbank.
+
+### Importar la Colección en Postman
+1. Abrir Postman
+2. Hacer clic en "Import" (Importar)
+3. Seleccionar el archivo `postman_collection.json` ubicado en la raíz del proyecto
+4. Todas las solicitudes estarán organizadas en carpetas por funcionalidad
+
+### Variables de Entorno en Postman
+La colección utiliza las siguientes variables que puedes configurar en tu entorno:
+- `producto_id`: ID del producto para pruebas
+- `usuario_id`: ID del usuario para pruebas
+- `pedido_id`: ID del pedido para pruebas
+- `mensaje_id`: ID del mensaje de contacto para pruebas
+- `token_ws`: Token de transacción generado por Webpay
+
+### Grupos de Endpoints en la Colección
+
+#### Authentication
+- **POST** `/auth/register`: Registrar nuevo usuario con Firebase
+- **POST** `/auth/login`: Iniciar sesión (información para cliente)
+- **POST** `/auth/verify-token`: Verificar token de Firebase
+- **GET** `/auth/me`: Obtener información del usuario autenticado
+- **GET** `/auth/status`: Verificar estado de configuración de Firebase
+
+#### Health Check
+- **GET** `/`: Endpoint base
+- **GET** `/health`: Verificar estado del servidor y BD
+
+#### Productos
+- **GET**    `/productos`: Listar todos los productos
+- **GET**    `/productos/:id`: Obtener producto por ID
+- **GET**    `/productos/categoria/:nombre`: Productos por categoría
+- **POST**   `/productos`: Crear producto
+- **PUT**    `/productos/:id`: Actualizar producto
+- **DELETE** `/productos/:id`: Eliminar producto
+
+#### Usuarios
+- **GET**    `/usuarios/:id`: Obtener usuario
+- **POST**   `/usuarios`: Crear usuario
+- **PUT**    `/usuarios/:id`: Actualizar usuario
+- **DELETE** `/usuarios/:id`: Eliminar usuario
+
+#### Pedidos
+- **GET**    `/pedidos/:id`: Obtener pedido
+- **GET**    `/pedidos/usuario/:usuarioId`: Pedidos por usuario
+- **POST**   `/pedidos`: Crear pedido
+- **PUT**    `/pedidos/:id`: Actualizar pedido
+- **DELETE** `/pedidos/:id`: Eliminar pedido
+
+#### Contacto
+- **GET**    `/contacto`: Listar mensajes
+- **GET**    `/contacto/:id`: Obtener mensaje
+- **POST**   `/contacto`: Crear mensaje
+- **DELETE** `/contacto/:id`: Eliminar mensaje
+
+#### Webpay (Procesamiento de Pagos)
+- **POST** `/webpay/crear-transaccion`: Iniciar pago
+- **POST** `/webpay/retorno`: Endpoint de retorno tras pago
+- **GET**  `/webpay/retorno`: Página final post-pago
+
+### Pruebas de Procesamiento de Pagos con Transbank
+
+#### Flujo Completo de Prueba de Pago
+
+1. **Crear un pedido** (usando Postman)
+   - Usar la solicitud "Crear pedido" en la carpeta "Pedidos"
+   - Configurar la variable `pedido_id` con el ID recibido
+
+2. **Iniciar el pago** (3 opciones)
+   - **Opción 1 - Postman**: Usar la solicitud "Crear transacción" en la carpeta "Webpay"
+   - **Opción 2 - Script Node.js** (multiplataforma):
+     ```bash
+     # Funciona en Windows, Mac y Linux
+     node webpay-test.js
+     ```
+
+3. **Completar el pago en Webpay**
+   - Se abrirá una página web con el formulario de pago
+   - Utilizar las tarjetas de prueba (información más abajo)
+
+4. **Verificar resultado**
+   - Después del pago, serás redirigido a la página de confirmación
+   - Verificar en la base de datos que el pedido se ha actualizado correctamente
+
+### Datos de prueba para Transbank
+
+#### Tarjeta de Crédito VISA (Aprobada)
+- Número: 4051 8856 0044 6623
+- CVV: 123
+- Fecha expiración: Cualquiera en el futuro
+- RUT: 11.111.111-1
+- Clave: 123
+
+#### Tarjeta de Débito (Aprobada)
+- Número Tarjeta: 4051 8842 3993 7763
+- RUT: 11.111.111-1
+- Clave: 123
+
+#### Para RECHAZAR un pago
+- Tarjeta: 5186 0595 5959 0568
+- CVV: 123
+- Expiración: Cualquiera en el futuro
+
+### Diagrama de Flujo de Pago
+
 ```
-
-### Ejemplos de Uso con Casos Reales
-
-#### Obtener Todos los Productos
-```bash
-curl http://localhost:3000/productos
-```
-
-#### Crear un Producto
-```bash
-curl -X POST http://localhost:3000/productos \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Test Product API",
-    "modelo": "TEST-API",
-    "marca": "TestAPI",
-    "codigo": "API-TEST-001",
-    "precio": 9990,
-    "stock": 10,
-    "categoria": "Test",
-    "descripcion": "Producto de prueba API"
-  }'
-```
-
-#### Actualizar un Producto
-```bash
-curl -X PUT http://localhost:3000/productos/56 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Test Product API Updated",
-    "modelo": "TEST-API",
-    "marca": "TestAPI",
-    "codigo": "API-TEST-001",
-    "precio": 10990,
-    "stock": 15,
-    "categoria": "Test",
-    "descripcion": "Producto de prueba API actualizado"
-  }'
-```
-
-#### Crear un Usuario
-```bash
-curl -X POST http://localhost:3000/usuarios \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Usuario Test API",
-    "email": "test.api@example.com",
-    "telefono": "+56912345999",
-    "direccion": "Calle Test 123"
-  }'
-```
-
-#### Crear un Pedido
-```bash
-curl -X POST http://localhost:3000/pedidos \
-  -H "Content-Type: application/json" \
-  -d '{
-    "producto_id": 56, 
-    "usuario_id": 10, 
-    "cantidad": 2, 
-    "estado": "pendiente"
-  }'
-```
-
-#### Crear un Mensaje de Contacto
-```bash
-curl -X POST http://localhost:3000/contacto \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Usuario Test API",
-    "email": "test.api@example.com",
-    "asunto": "Test API Message",
-    "mensaje": "Este es un mensaje de prueba enviado a través de la API"
-  }'
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  1. Crear   │     │ 2. Iniciar  │     │  3. Webpay  │
+│   Pedido    │────▶│    Pago     │────▶│  Formulario │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                               │
+┌─────────────┐     ┌─────────────┐            ▼
+│ 6. Mostrar  │     │ 5. Procesar │     ┌─────────────┐
+│Confirmación │◀────│  Resultado  │◀────│ 4. Ingresar │
+└─────────────┘     └─────────────┘     │   Tarjeta   │
+                                        └─────────────┘
 ```
 
 ## 🔒 Seguridad
 
+- ✅ **Firebase Authentication**: Autenticación segura con Firebase
+- ✅ **JWT Tokens**: Verificación de tokens para rutas protegidas
 - ✅ **CORS**: Configurado para desarrollo y producción
 - ✅ **Validación**: Validación de entrada en todos los endpoints
 - ✅ **SSL**: Conexión segura a la base de datos
@@ -377,7 +442,11 @@ El sistema implementa validaciones exhaustivas en todos los endpoints:
 - ✅ **Usuario ID**: Obligatorio, debe existir
 - ✅ **Cantidad**: Obligatorio, entero positivo
 - ✅ **Stock**: Verificación automática de disponibilidad
-- ✅ **Estado**: Valores permitidos: "pendiente", "enviado", "completado", "cancelado"
+- ✅ **Estado**: Valores permitidos: "pendiente", "pagado", "enviado", "completado", "cancelado", "error"
+- ✅ **Monto**: Calculado automáticamente en base al precio del producto y cantidad
+- ✅ **Token Transbank**: Generado automáticamente al iniciar un pago
+- ✅ **Estado Transbank**: Actualizado automáticamente según respuesta de Webpay
+- ✅ **Orden de Compra**: Generado automáticamente con formato ORD-{id}-{random}
 
 #### Contacto
 - ✅ **Nombre**: Obligatorio, string
@@ -425,16 +494,14 @@ Ejemplo real:
 
 ### Monitoreo en Tiempo Real
 
-Los logs están disponibles en:
-- Local: Archivo `server.log` en la raíz del proyecto
-- Producción: Dashboard de Railway
+Los logs están disponibles en el archivo `server.log` en la raíz del proyecto.
 
-## 🚀 Despliegue Automático
+## 🚀 Despliegue
 
-El proyecto se despliega automáticamente en Railway cuando:
-1. Se hace push al repositorio conectado a Railway
-2. Se ejecuta `railway up`
-3. Se actualiza desde el dashboard de Railway
+Para iniciar el servidor localmente:
+```bash
+node index.js
+```
 
 ## Tecnologías Utilizadas
 
@@ -442,6 +509,36 @@ El proyecto se despliega automáticamente en Railway cuando:
 - **Express.js**: Framework web
 - **PostgreSQL**: Base de datos relacional
 - **pg**: Cliente PostgreSQL para Node.js
+- **Firebase Admin SDK**: Biblioteca oficial para autenticación con Firebase
+- **Transbank SDK**: Biblioteca oficial para integración con Webpay
+- **WebpayPlus**: Servicio de pago de Transbank
+
+## 💳 Integración con Transbank
+
+### Flujo de Pago
+
+1. **Creación del Pedido**: Se crea un pedido en la base de datos con estado "pendiente"
+2. **Inicio de Pago**: Se inicia el proceso de pago con una petición a `/api/webpay/crear-transaccion`
+3. **Generación de Token**: Se genera un token único para la transacción y se actualiza en la base de datos
+4. **Redirección a Webpay**: El usuario es redirigido a la página de pago de Webpay
+5. **Proceso de Pago**: El usuario ingresa los datos de su tarjeta en Webpay
+6. **Retorno**: Webpay redirecciona al usuario al endpoint `/api/webpay/retorno`
+7. **Confirmación**: Se verifica el estado de la transacción y se actualiza el pedido
+8. **Finalización**: Se muestra al usuario una página de confirmación
+
+### Modos de Integración
+
+- **Ambiente**: Integración (Testing)
+- **Tipo de Integración**: REST API con SDK oficial
+- **Versión SDK**: 6.0.0
+- **Tipo de Transacción**: WebpayPlus
+- **Estados de Transacción**: INICIADA, AUTHORIZED, FAILED, RECHAZADA, ERROR
+
+### Herramientas de Prueba
+
+- **webpay-test.js**: Script de prueba multiplataforma (Windows, Mac, Linux)
+- **webpay-test.sh**: Script bash para Mac/Linux
+- **curl**: Ejemplos de peticiones directas a la API
 
 ## Contribución
 
@@ -454,19 +551,26 @@ El proyecto se despliega automáticamente en Railway cuando:
 ## 📚 Documentación Adicional
 
 - [Documentación de la API](docs/API.md)
-- [Guía de Postman](docs/POSTMAN_GUIDE.md)
+- [Guía de Postman](docs/POSTMAN_GUIDE.md) - Incluye instrucciones para pruebas de Firebase
 
 ## 🆘 Soporte
 
 Para soporte técnico:
-1. Revisar los logs en Railway Dashboard
+1. Revisar los logs en el archivo `server.log`
 2. Verificar el estado de la base de datos PostgreSQL
 3. Consultar la documentación de la API
-4. Verificar las variables de entorno en Railway
+4. Verificar la configuración en el archivo `.env`
 
 ---
 
-**Estado**: ✅ Desplegado y funcionando en Railway
-**Base de Datos**: ✅ Railway PostgreSQL conectada
-**Última actualización**: 25 de mayo de 2025
+**Nota sobre Variables de Entorno**: ⚠️ Las variables de entorno están incluidas intencionalmente en el repositorio ya que este es un ambiente académico controlado y las credenciales son de prueba (Webpay Integration).
+
+**Estado**: ✅ Listo para evaluación académica EV3
+**Institución**: Instituto Profesional DuocUC - Escuela de Informática
+**Equipo**: Felipe López, Rodrigo Llanquinao, Alex Cayuqueo
+**Base de Datos**: ✅ Configurada para entorno local
+**Última actualización**: 26 de mayo de 2025
 **Pruebas Completas**: ✅ Todos los endpoints verificados y funcionales
+**Firebase Authentication**: ✅ Sistema de autenticación implementado y probado
+**Integración Transbank**: ✅ Funcionando en ambiente de integración
+**Pagos con Webpay**: ✅ Flujo completo implementado y probado
