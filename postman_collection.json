@@ -1093,12 +1093,12 @@
     },
     {
       "key": "test_user_id",
-      "value": "9",
+      "value": "12",
       "description": "ID de usuario de prueba (Carlos Rodríguez)"
     },
     {
       "key": "pedido_id",
-      "value": "123",
+      "value": "16",
       "description": "ID de pedido de ejemplo"
     },
     {
@@ -1123,7 +1123,7 @@
     },
     {
       "key": "test_user_email",
-      "value": "test@example.com",
+      "value": "test@ejemplo.com",
       "description": "Email de usuario de prueba para autenticación con Firebase"
     },
     {

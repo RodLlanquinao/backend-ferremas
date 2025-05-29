@@ -69,41 +69,50 @@ http://localhost:8000
 backend-ferremas/
 ├── config/
 │   ├── database.js          # Configuración de PostgreSQL DB
-│   ├── environment.js       # Variables de entorno
-│   └── firebase.js          # Configuración de Firebase Authentication
+│   ├── environment.js       # Variables de entorno y configuración
+│   └── firebase.js         # Config Firebase Auth
 ├── controllers/
 │   ├── productosController.js
-│   ├── usuariosController.js
+│   ├── usuariosController.js 
 │   ├── pedidosController.js
-│   └── contactoController.js
+│   ├── contactoController.js
+│   └── webpayController.js  # Controlador para pagos
 ├── middleware/
-│   ├── authMiddleware.js    # Middleware de autenticación con Firebase
-│   ├── errorHandler.js      # Manejo de errores
-│   └── validation.js        # Validaciones
+│   ├── authMiddleware.js    # Verificación de tokens Firebase
+│   ├── errorHandler.js      # Manejo centralizado de errores
+│   ├── validation.js        # Validaciones de datos
+│   └── cors.js             # Configuración CORS
 ├── models/
+│   ├── BaseModel.js        # Modelo base con métodos comunes
 │   ├── Producto.js
-│   ├── Usuario.js           # Actualizado con soporte para Firebase
-│   ├── Pedido.js
+│   ├── Usuario.js          # Con campos Firebase
+│   ├── Pedido.js           # Con campos Webpay
 │   └── Contacto.js
 ├── routes/
-│   ├── auth.routes.js       # Rutas de autenticación con Firebase
-│   ├── productos.routes.js
+│   ├── auth.routes.js      # Autenticación Firebase
+│   ├── productos.routes.js 
 │   ├── usuarios.routes.js
 │   ├── pedidos.routes.js
 │   ├── contacto.routes.js
-│   └── webpay.routes.js     # Rutas para procesamiento de pagos
+│   └── webpay.routes.js    # Rutas Webpay Plus
 ├── utils/
-│   └── responseHelper.js    # Helpers para respuestas
+│   ├── responseHelper.js   # Formato respuestas API
+│   ├── logger.js          # Sistema de logs
+│   ├── validators.js      # Funciones de validación
+│   └── webpayHelper.js    # Helpers para Webpay
+├── tests/
+│   ├── integration/       # Pruebas de integración
+│   └── unit/             # Pruebas unitarias
 ├── scripts/
-│   ├── test-db.js           # Pruebas de conexión a BD
-│   └── migrate.js           # Script para ejecutar migraciones
-├── migrations/
-│   └── 01_add_firebase_auth_columns.sql # Migración para Firebase
-├── webpay-test.js           # Script multiplataforma para pruebas de pago
-├── webpay-test.sh           # Script bash para pruebas de pago
+│   ├── test-db.js        # Pruebas conexión DB
+│   ├── test-firebase.js  # Pruebas Firebase
+│   └── test-webpay.js    # Pruebas Webpay
 ├── docs/
-│   ├── API.md               # Documentación de la API
-│   └── POSTMAN_GUIDE.md     # Guía de Postman actualizada con Firebase
+│   ├── API.md            # Documentación API
+│   ├── FIREBASE.md       # Guía Firebase
+│   └── WEBPAY.md         # Guía Webpay
+├── .env                  # Variables de entorno
+├── index.js             # Punto de entrada 
 └── package.json
 ```
 
