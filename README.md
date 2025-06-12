@@ -699,8 +699,6 @@ Para soporte técnico:
 
 ---
 
-**Nota sobre Variables de Entorno**: ⚠️ Las variables de entorno están incluidas intencionalmente en el repositorio ya que este es un ambiente académico controlado y las credenciales son de prueba (Webpay Integration).
-
 **Estado**: ✅ Listo para evaluación académica EV2
 **Institución**: Instituto Profesional DuocUC - Escuela de Informática
 **Equipo**: Felipe López, Rodrigo Llanquinao, Alex Cayuqueo
