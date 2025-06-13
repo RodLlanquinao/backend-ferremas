@@ -24,7 +24,7 @@ module.exports = {
   // Configuración de la base de datos - Railway provee automáticamente DATABASE_URL
   // En Railway, esta variable es inyectada automáticamente al deploy
   // Para desarrollo local, usar archivo .env con la URL de conexión
-  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:jvVmUJruIgzoLJOetRRRnAsTUnkQzcYQ@crossover.proxy.rlwy.net:26319/railway?sslmode=no-verify',
+  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_Em4oXHO8kfpD@ep-plain-leaf-a89nmrdf-pooler.eastus2.azure.neon.tech/neondb?sslmode=require',
   
   // Configuración explícita de SSL - Usada cuando sslmode en la URL no es suficiente
   DB_SSL_ENABLED: process.env.DB_SSL_ENABLED !== 'false',
