@@ -19,7 +19,7 @@ const {
  */
 // Configurar las opciones SSL según las variables de entorno
 const sslConfig = DB_SSL_ENABLED ? {
-  rejectUnauthorized: DB_SSL_REJECT_UNAUTHORIZED
+  rejectUnauthorized: false  // Siempre false para Railway
 } : false;
 
 console.log("🔒 Configuración de SSL:", sslConfig ? "Habilitado" : "Deshabilitado");
