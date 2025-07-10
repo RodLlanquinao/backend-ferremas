@@ -33,3 +33,4 @@ db.query('SELECT NOW()', (err, res) => {
       console.log('Conexión exitosa a PostgreSQL:', res.rows[0]);
     }
 });
+
